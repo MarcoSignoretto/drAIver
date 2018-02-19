@@ -1,0 +1,7 @@
+opencv/
+opencv_contrib/
+*.idea/
+opencv-*.zip
+opencv_contrib-*.zip
+StereoVision/
+
