@@ -26,5 +26,10 @@ ln -s <<PATH-TO-TENSORFLOW-MODEL>>/tensorflow-models/research/slim/* <<ANACONDA-
  ```
 
  ### not definitive ###
-
  [Install darkflow](https://github.com/thtrieu/darkflow)
+
+### windows installation ###
+1. for windows copy rc.exe e rcdll.dll to visual studio bin directory
+2. create shorcut to darkflow from site-packages of the virtual env
+3. copy flow outsite the original folder otherwise it doesn't work ( example create a folder flowdir and put it inside)
+
