@@ -24,3 +24,7 @@ protoc object_detection/protos/*.proto --python_out=.
 ln -s <<PATH-TO-TENSORFLOW-MODEL>>tensorflow-models/research/* <<ANACONDA-INSTALLATION-DIR>>/anaconda3/envs/drAIver/lib/python3.5/site-packages/
 ln -s <<PATH-TO-TENSORFLOW-MODEL>>/tensorflow-models/research/slim/* <<ANACONDA-INSTALLATION-DIR>>/anaconda3/envs/drAIver/lib/python3.5/site-packages/
  ```
+
+ ### not definitive ###
+
+ [Install darkflow](https://github.com/thtrieu/darkflow)
