@@ -8,7 +8,7 @@ All commands are related to root directory of the project
 
 ## Setup Mac ##
 1. Install anaconda 3
-2. Open terminal and execute:  ```conda env create -f setup/env/drAiver_pc_env.yml```
+2. Open terminal and execute:  ```conda env create -f setup/env/drAiver_mac_env.yml```
 
 4. execute ln -s on tensorflow-models/research and  tensorflow-models/research/slim
 
