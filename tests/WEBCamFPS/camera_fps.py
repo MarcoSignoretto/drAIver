@@ -1,6 +1,7 @@
 import cv2
 from imutils.video import WebcamVideoStream
 from imutils.video import FPS
+import sys, getopt
 import imutils
 
 FRAME_WIDTH = 640#320
@@ -39,21 +40,22 @@ def threadind():
 def queueVersion():
     pass
 
-def basic():
+def basic(camera_index,num_frames,display):
     key = ''
-    vc = cv2.VideoCapture(0)
+    vc = cv2.VideoCapture(camera_index)
     print(vc.set(cv2.CAP_PROP_FRAME_WIDTH, FRAME_WIDTH))
     print(vc.set(cv2.CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT))
     print(vc.set(cv2.CAP_PROP_FPS, 60))
 
-    _, frame = vc.read()
-    cv2.imshow("FRame", frame)
     fps = FPS().start()
-    while key != ord('q'):
+    steps = 0
+    while key != ord('q') and steps < num_frames:
         _,frame = vc.read()
-        cv2.imshow("FRame",frame)
+        if display:
+            cv2.imshow("FRame",frame)
         key = cv2.waitKey(1) & 0xFF
         fps.update()
+        steps = steps + 1
 
     fps.stop()
     cv2.destroyAllWindows()
@@ -62,9 +64,34 @@ def basic():
     print("[INFO] approx. FPS: {:.2f}".format(fps.fps()))
 
 
+def usage():
+    pass
+
 
 if __name__ == '__main__':
-    basic()
+    camera_index = 0
+    num_frames = 100
+    display = False
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], 'hc:f:d', ['help', 'camera=', 'num_frames=', 'display'])
+    except getopt.GetoptError:
+        print('camera_fps.py -c <camera_index> -f <num_frames> -d <y/n>')
+        sys.exit(2)
+
+    for o, a in opts:
+        if o in("-c","--camera"):
+            camera_index = int(a)
+        elif o in ("-h", "--help"):
+            usage()
+            sys.exit()
+        elif o in ("-f", "--num_frames"):
+            num_frames = int(a)
+        elif o in ("-d", "--display"):
+            display = True
+        else:
+            assert False, "unhandled option"
+
+    basic(camera_index, num_frames, display)
 
 
 
