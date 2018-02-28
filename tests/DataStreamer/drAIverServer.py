@@ -28,24 +28,27 @@ if __name__ == '__main__':
 
     while True:
 
-        ret_left, frame_left = vc.read()
+        if vc.isOpened():
 
-        # This code should be removed
-        #cv2.imshow('CAMERA LEFT', frame_left)
-        #cv2.waitKey(1)
+            ret_left, frame_left = vc.read()
+            if ret_left:
 
-        encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 100]
-        # =========== LEFT IMAGE ============
-        result_left, imgencode_left = cv2.imencode('.jpg', frame_left, encode_param)
+                # This code should be removed
+                #cv2.imshow('CAMERA LEFT', frame_left)
+                #cv2.waitKey(1)
 
-        # With png we have lags
-        # encode_param = [int(cv2.IMWRITE_PNG_COMPRESSION), 0]
-        # result, imgencode = cv2.imencode('.png', frame, encode_param)
-        data_left = np.array(imgencode_left)
-        stringData_left = data_left.tostring()
+                encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 100]
+                # =========== LEFT IMAGE ============
+                result_left, imgencode_left = cv2.imencode('.jpg', frame_left, encode_param)
 
-        conn.send(str(len(stringData_left)).ljust(16).encode())
-        conn.send(stringData_left)
+                # With png we have lags
+                # encode_param = [int(cv2.IMWRITE_PNG_COMPRESSION), 0]
+                # result, imgencode = cv2.imencode('.png', frame, encode_param)
+                data_left = np.array(imgencode_left)
+                stringData_left = data_left.tostring()
+
+                conn.send(str(len(stringData_left)).ljust(16).encode())
+                conn.send(stringData_left)
 
     cv2.destroyAllWindows()
     conn.close()
