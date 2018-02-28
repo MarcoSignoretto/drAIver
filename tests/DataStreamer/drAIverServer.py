@@ -21,10 +21,10 @@ if __name__ == '__main__':
 
     # camera init
     vc = cv2.VideoCapture()
+    vc.open(0)
     print(vc.set(cv2.CAP_PROP_FRAME_WIDTH, FRAME_WIDTH))
     print(vc.set(cv2.CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT))
     print(vc.set(cv2.CAP_PROP_FPS, FPS))
-    vc.open(0)
 
     while True:
 
@@ -32,7 +32,7 @@ if __name__ == '__main__':
 
         # This code should be removed
         #cv2.imshow('CAMERA LEFT', frame_left)
-        cv2.waitKey(1)
+        #cv2.waitKey(1)
 
         encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 100]
         # =========== LEFT IMAGE ============
