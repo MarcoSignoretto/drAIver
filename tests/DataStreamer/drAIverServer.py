@@ -4,6 +4,7 @@
 import socket
 import cv2
 import numpy as np
+import time
 
 
 FRAME_WIDTH = 640
@@ -22,9 +23,11 @@ if __name__ == '__main__':
     # camera init
     vc = cv2.VideoCapture()
     vc.open(0)
+    time.sleep(1)
     print(vc.set(cv2.CAP_PROP_FRAME_WIDTH, FRAME_WIDTH))
     print(vc.set(cv2.CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT))
     print(vc.set(cv2.CAP_PROP_FPS, FPS))
+    time.sleep(1)
 
     while True:
 
