@@ -14,10 +14,16 @@ from object_detection.utils import visualization_utils as vis_util
 
 import sys
 
+import os
+os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"   # see issue #152
+os.environ["CUDA_VISIBLE_DEVICES"]="0"
+
 
 sys.path.append("..")
 
-DATASET_PATH = '/Users/marco/Documents/Datasets/drAIver/object_detector/'
+#DATASET_PATH = '/Users/marco/Documents/Datasets/drAIver/object_detector/'
+DATASET_PATH = 'S:\\Datasets\\drAIver\\object_detector\\'
+BACK_SLASH = '\\'
 
 # What model to download.
 MODEL_NAME = 'ssd_mobilenet_v1_coco_2017_11_17'
@@ -25,7 +31,7 @@ MODEL_FILE = MODEL_NAME + '.tar.gz'
 DOWNLOAD_BASE = 'http://download.tensorflow.org/models/object_detection/'
 
 # Path to frozen detection graph. This is the actual model that is used for the object detection.
-PATH_TO_CKPT = DATASET_PATH + MODEL_NAME + '/frozen_inference_graph.pb'
+PATH_TO_CKPT = DATASET_PATH + MODEL_NAME + BACK_SLASH +'frozen_inference_graph.pb'
 
 # List of the strings that is used to add correct label for each box.
 PATH_TO_LABELS = os.path.join('data', 'mscoco_label_map.pbtxt')
@@ -54,6 +60,7 @@ def detect_objects(image_np, sess, detection_graph):
     num_detections = detection_graph.get_tensor_by_name('num_detections:0')
 
     # Actual detection.
+    #with tf.device('/device:CPU:0'): // TODO try on giulia PC
     (boxes, scores, classes, num_detections) = sess.run(
         [boxes, scores, classes, num_detections],
         feed_dict={image_tensor: image_np_expanded})
@@ -81,7 +88,9 @@ def worker(input_q, output_q):
             od_graph_def.ParseFromString(serialized_graph)
             tf.import_graph_def(od_graph_def, name='')
 
-        sess = tf.Session(graph=detection_graph)
+        config = tf.ConfigProto(log_device_placement=False)
+        config.gpu_options.allow_growth = True
+        sess = tf.Session(graph=detection_graph, config=config)
 
     fps = FPS().start()
     while True:
