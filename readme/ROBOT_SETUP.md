@@ -53,6 +53,14 @@ sudo ./install.sh
 references : https://www.dexterindustries.com/BrickPi/brickpi-tutorials-documentation/getting-started/pi-prep/
 
 
+## Hotspot setup ##
 
+https://www.raspberrypi.org/documentation/configuration/wireless/access-point.md
+https://frillip.com/using-your-raspberry-pi-3-as-a-wifi-access-point-with-hostapd/
 
 # TODO complete with hotspot setup #
+
+## Samba shared folder ##
+https://raspberrypihq.com/how-to-share-a-folder-with-a-windows-computer-from-a-raspberry-pi/
+
+connect to shared folder with ```smb://pi@drAIver.local``` and prompt the password ```robots1234```
