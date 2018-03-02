@@ -6,6 +6,7 @@ import cv2
 import numpy as np
 import time
 from threading import Thread
+from protocol import MotorProtocol
 
 
 FRAME_WIDTH = 640
@@ -15,14 +16,29 @@ FPS = 30
 OUTPUT_PORT = 10000
 INPUT_PORT = 10001
 
+COMMUNICATION_END = 0x01000000
+
+def recvall(sock, count):
+
+    buf = b''
+    while count:
+        newbuf = sock.recv(count)
+        if not newbuf: return None
+        buf += newbuf
+        count -= len(newbuf)
+    return buf
+
 
 def image_task():
+    print("Image Thread Started")
     # socket init
     server_address = (socket.gethostbyname("drAIver.local"), OUTPUT_PORT)
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.bind(server_address)
     sock.listen(True)
+    print("Image task waiting...")
     conn, addr = sock.accept()
+    print("Image task connected")
 
     # camera init
     vc = cv2.VideoCapture()
@@ -57,12 +73,20 @@ def image_task():
 
 
 def motion_task():
+    print("Motion Thread Started")
     # socket init
     server_address = (socket.gethostbyname("drAIver.local"), INPUT_PORT)
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.bind(server_address)
     sock.listen(True)
+    print("Motion task waiting ...")
     conn, addr = sock.accept()
+    print("Motion task connected")
+
+    packet = recvall(conn, MotorProtocol.COMMUNICATION_PACKET_SIZE) & MotorProtocol.COMMUNICATION_MASK
+    while packet != COMMUNICATION_END:
+        packet = recvall(conn, MotorProtocol.COMMUNICATION_PACKET_SIZE) & MotorProtocol.COMMUNICATION_MASK
+        print(packet)
 
     # TODO complete
 
@@ -71,6 +95,9 @@ if __name__ == '__main__':
 
     image_thread = Thread(target=image_task)
     image_thread.start()
+
+    motion_thread = Thread(target=motion_task)
+    motion_thread.start()
 
 
 
