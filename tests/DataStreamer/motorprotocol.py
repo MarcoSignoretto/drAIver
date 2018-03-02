@@ -1,6 +1,5 @@
-
-
 class MotorProtocol:
+
     # most significative bit is the motor identifier ( 1 is left, 0 is right)
     MOTOR_LEFT = 0x8000
     MOTOR_RIGHT = 0x0000
@@ -14,8 +13,7 @@ class MotorProtocol:
     COMMUNICATION_MASK = 0xFFFFFFFF  # 4 bytes
     COMMUNICATION_PACKET_SIZE = 4  # 4 bytes in communication
 
-    @staticmethod
-    def pack(motor, speed):
+    def pack(self, motor, speed):
         """
         pack(motor, speed)
 
@@ -38,12 +36,12 @@ class MotorProtocol:
             pack = MotorProtocol.pack(MOTOR_LEFT, 100)
         """
 
-        packet = speed & MotorProtocol.MOTOR_SPEED_MASK
+        packet = speed & self.MOTOR_SPEED_MASK
         packet = packet ^ motor
         return packet
 
-    @staticmethod
-    def merge(motor_left_packet, motor_right_packet):
+
+    def merge(self, motor_left_packet, motor_right_packet):
         """
         merge(motor, action, speed)
 
@@ -68,7 +66,7 @@ class MotorProtocol:
 
         packet = motor_left_packet << 16
         packet = packet ^ motor_right_packet
-        packet = packet & MotorProtocol.COMMUNICATION_MASK
+        packet = packet & self.COMMUNICATION_MASK
         return packet
 
 
