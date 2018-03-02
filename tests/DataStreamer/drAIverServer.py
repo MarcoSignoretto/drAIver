@@ -6,7 +6,7 @@ import cv2
 import numpy as np
 import time
 from threading import Thread
-from .motorprotocol import MotorProtocol
+from motorprotocol import MotorProtocol
 
 
 FRAME_WIDTH = 640

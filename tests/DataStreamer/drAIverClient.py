@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 import keyboard
 from threading import Thread
-from .motorprotocol import MotorProtocol
+from motorprotocol import MotorProtocol
 
 OUTPUT_PORT = 10001
 INPUT_PORT = 10000
