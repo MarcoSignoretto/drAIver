@@ -3,10 +3,15 @@
 In order to connect your laptop to your raspberry execute the following commands:
 
 ```sh
-	ssh pi@dex.local
+	ssh pi@drAIver.local
 ```
 
-password: robot1234
+password: robots1234
+
+# drAIver virtual env #
+
+1. execute ```lsvirtualenv``` to show all available virtual envs
+2. activate drAiver with ```workon drAIver```
 
 # Setup #
 
