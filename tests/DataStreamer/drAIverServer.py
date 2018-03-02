@@ -7,6 +7,7 @@ import numpy as np
 import time
 from threading import Thread
 from motorprotocol import MotorProtocol
+import brickpi3
 
 
 FRAME_WIDTH = 640
@@ -83,10 +84,28 @@ def motion_task():
     conn, addr = sock.accept()
     print("Motion task connected")
 
-    packet = recvall(conn, MotorProtocol.COMMUNICATION_PACKET_SIZE) & MotorProtocol.COMMUNICATION_MASK
+    BP = brickpi3.BrickPi3()
+
+    mp = MotorProtocol()
+
+    packet = int.from_bytes(recvall(conn, MotorProtocol.COMMUNICATION_PACKET_SIZE), byteorder='big') & MotorProtocol.COMMUNICATION_MASK
     while packet != COMMUNICATION_END:
-        packet = recvall(conn, MotorProtocol.COMMUNICATION_PACKET_SIZE) & MotorProtocol.COMMUNICATION_MASK
+        packet = int.from_bytes(recvall(conn, MotorProtocol.COMMUNICATION_PACKET_SIZE), byteorder='big') & MotorProtocol.COMMUNICATION_MASK
         print(packet)
+
+        left_packet, right_packet = mp.split(packet)
+        _, left_speed = mp.decompose(left_packet)
+        _, right_speed = mp.decompose(right_packet)
+
+        # TODO fix negative number
+
+        print("LEFT: "+str(left_speed))
+        print("RIGHT: "+str(right_speed))
+
+        BP.set_motor_power(BP.PORT_D, left_speed)
+        BP.set_motor_power(BP.PORT_A, right_speed)
+
+    BP.reset_all()
 
     # TODO complete
 

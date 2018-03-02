@@ -12,6 +12,7 @@ class MotorProtocol:
 
     COMMUNICATION_MASK = 0xFFFFFFFF  # 4 bytes
     COMMUNICATION_PACKET_SIZE = 4  # 4 bytes in communication
+    MOTOR_PACKET_MASK = 0x0000FFFF
 
     def pack(self, motor, speed):
         """
@@ -39,7 +40,6 @@ class MotorProtocol:
         packet = speed & self.MOTOR_SPEED_MASK
         packet = packet ^ motor
         return packet
-
 
     def merge(self, motor_left_packet, motor_right_packet):
         """
@@ -69,6 +69,16 @@ class MotorProtocol:
         packet = packet & self.COMMUNICATION_MASK
         return packet
 
+    def split(self, packet):
+
+        right_packet = packet & self.MOTOR_PACKET_MASK
+        left_packet = (packet >> 16) & self.MOTOR_PACKET_MASK
+        return left_packet, right_packet
+
+    def decompose(self, packet):
+        speed = (packet & self.MOTOR_SPEED_MASK)
+        motor = (packet >> 15) & 0x0001  # keep most significative bit
+        return motor, speed
 
 
 

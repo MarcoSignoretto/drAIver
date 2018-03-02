@@ -4,6 +4,7 @@ import numpy as np
 import keyboard
 from threading import Thread
 from motorprotocol import MotorProtocol
+import time
 
 OUTPUT_PORT = 10001
 INPUT_PORT = 10000
@@ -12,6 +13,7 @@ FRAME_WIDTH = 640
 FRAME_HEIGHT = 480
 FPS = 30
 
+SPEED = 50
 
 def recvall(sock, count):
 
@@ -69,26 +71,27 @@ def motion_task():
 
         if keyboard.is_pressed('e'):
             print("Motor Left Forth")
-            left_packet = mp.pack(MotorProtocol.MOTOR_LEFT, 50)
+            left_packet = mp.pack(MotorProtocol.MOTOR_LEFT, SPEED)
             #time.sleep(button_delay)
 
         elif keyboard.is_pressed('d'):
             print("Motor Left Back")
-            left_packet = mp.pack(MotorProtocol.MOTOR_LEFT, -50)
+            left_packet = mp.pack(MotorProtocol.MOTOR_LEFT, -SPEED)
             #time.sleep(button_delay)
 
         if keyboard.is_pressed('p'):
             print("Motor Right Forth")
-            right_packet = mp.pack(MotorProtocol.MOTOR_RIGHT, 50)
+            right_packet = mp.pack(MotorProtocol.MOTOR_RIGHT, SPEED)
             #time.sleep(button_delay)
 
         elif keyboard.is_pressed('l'):
             print("Motor Right Back")
-            right_packet = mp.pack(MotorProtocol.MOTOR_RIGHT, -50)
+            right_packet = mp.pack(MotorProtocol.MOTOR_RIGHT, -SPEED)
             #time.sleep(button_delay)
 
         packet = mp.merge(left_packet, right_packet)
         sock.send(packet.to_bytes(MotorProtocol.COMMUNICATION_PACKET_SIZE, byteorder='big'))
+        time.sleep(0.1)
 
 
 if __name__ == '__main__':
@@ -99,6 +102,7 @@ if __name__ == '__main__':
     motion_thread = Thread(target=motion_task)
     motion_thread.start()
     # motion_task()
+
 
     # left_motor_thread = Thread(target=left_motor_task)
     # left_motor_thread.start()
