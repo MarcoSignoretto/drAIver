@@ -32,14 +32,6 @@ def recvall(sock, count):
 
 def image_task():
     print("Image Thread Started")
-    # socket init
-    server_address = (socket.gethostbyname("drAIver.local"), OUTPUT_PORT)
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.bind(server_address)
-    sock.listen(True)
-    print("Image task waiting...")
-    conn, addr = sock.accept()
-    print("Image task connected")
 
     # camera init
     vc = cv2.VideoCapture()
@@ -49,6 +41,17 @@ def image_task():
     print(vc.set(cv2.CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT))
     print(vc.set(cv2.CAP_PROP_FPS, FPS))
     time.sleep(1)  # without this camera setup failed
+
+
+    # socket init
+    server_address = (socket.gethostbyname("drAIver.local"), OUTPUT_PORT)
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.bind(server_address)
+    sock.listen(True)
+    print("Image task waiting...")
+    conn, addr = sock.accept()
+    print("Image task connected")
+
 
     while True:
 
@@ -71,7 +74,6 @@ def image_task():
 
     cv2.destroyAllWindows()
     conn.close()
-
 
 def motion_task():
     print("Motion Thread Started")
@@ -112,11 +114,13 @@ def motion_task():
 
 if __name__ == '__main__':
 
+    motion_thread = Thread(target=motion_task)
+    motion_thread.start()
+
     image_thread = Thread(target=image_task)
     image_thread.start()
 
-    motion_thread = Thread(target=motion_task)
-    motion_thread.start()
+
 
 
 

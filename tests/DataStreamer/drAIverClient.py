@@ -56,7 +56,8 @@ def motion_task():
 
     mp = MotorProtocol()
 
-    while True:
+    running = True
+    while running:
         #char = getch.getche()
         #print(keyboard.is_pressed(ord('q')))
 
@@ -66,8 +67,8 @@ def motion_task():
 
 
         if keyboard.is_pressed('q'):
+            running = False
             print("Stop!")
-            exit(0)
 
         if keyboard.is_pressed('e'):
             print("Motor Left Forth")
@@ -91,16 +92,24 @@ def motion_task():
 
         packet = mp.merge(left_packet, right_packet)
         sock.send(packet.to_bytes(MotorProtocol.COMMUNICATION_PACKET_SIZE, byteorder='big'))
-        time.sleep(0.1)
+        time.sleep(0.3)
+
+    sock.close()
 
 
 if __name__ == '__main__':
 
-    image_thread = Thread(target=image_task)
-    image_thread.start()
-    #
     motion_thread = Thread(target=motion_task)
     motion_thread.start()
+
+    #image_thread = Thread(target=image_task)
+    #image_thread.start()
+
+    image_task()
+
+
+    #
+
     # motion_task()
 
 
