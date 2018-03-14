@@ -117,6 +117,7 @@ dependencies:
     - cython==0.27.3
     - darkflow==1.0.0
     - getch==1.0
+    - imutils==0.4.5
     - keyboard==0.11.0
     - pyobjc-core==4.1
     - pyobjc-framework-cocoa==4.1
