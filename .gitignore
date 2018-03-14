@@ -4,4 +4,5 @@ opencv_contrib/
 opencv-*.zip
 opencv_contrib-*.zip
 StereoVision/
+__pycache__/*
 
