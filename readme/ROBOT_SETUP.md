@@ -67,6 +67,15 @@ mkvirtualenv cv -p python3
 workon drAIver # if terminal prepend (drAIver) all is ok
 ```
 
+### Link envs ###
+
+In order to run scripts without problems we need to create a symbolic link from ```envs/``` to ```~/.virtualenvs/```
+
+```bash
+cd /
+sudo ln -s ~/.virtualenvs/ envs/
+```
+
 ## Install OpenCv3 with Python3 ##
 
 ### Install dependencies ###
