@@ -25,38 +25,17 @@ to your ```~/.bashrc``` and then ```source ~/.bashrc```
 
 All commands are related to root directory of the project
 
-## Setup WINDOWS ##
-1. Install anaconda 3
-2. Open terminal and execute:  ```conda env create -f setup/env/drAiver_pc_env.yml```
+1. Install anaconda 3 for the correct operating system [Anaconda3 Download](https://www.anaconda.com/download/)
+2. choose your correct environment, the environments are located into the ```setup/env``` folder and the environemnt file has the following name structure:  ```drAIver_<operation_system>[_gpu]_env.yml``` where ```<operation_system>``` could be ```ubuntu```, ```osx```, ```windows```. ```[_gpu]``` is optional, if present the configuration include ```Tensorflow-gpu``` instead of ```Tensorflow```
 
-## Setup Mac ##
-1. Install anaconda 3
-2. Open terminal and execute:  ```conda env create -f setup/env/drAiver_mac_env.yml```
+The environment file that you choose will be called ```<your_environment>```.
 
-4. execute ln -s on tensorflow-models/research and  tensorflow-models/research/slim
+WARNING: not all the possible environment combinations are present on ```setup/env``` the folder.
 
-### Link tensorflow library into python env ###
-1. Download [tensorflow-models]()
-2. Compile protobuf with
-```sh
-# From tensorflow-models/research/
-protoc object_detection/protos/*.proto --python_out=.
- ```
-3. link libraries to current virtual env
-```sh
-ln -s <<PATH-TO-TENSORFLOW-MODEL>>tensorflow-models/research/* <<ANACONDA-INSTALLATION-DIR>>/anaconda3/envs/drAIver/lib/python3.5/site-packages/
-ln -s <<PATH-TO-TENSORFLOW-MODEL>>/tensorflow-models/research/slim/* <<ANACONDA-INSTALLATION-DIR>>/anaconda3/envs/drAIver/lib/python3.5/site-packages/
- ```
+### Create the environment ###
+Open terminal and execute:  ```conda env create -f setup/env/<your_environment>```
 
- ### not definitive ###
- [Install darkflow](https://github.com/thtrieu/darkflow)
-
-### windows installation ###
-1. for windows copy rc.exe e rcdll.dll to visual studio bin directory
-2. create shorcut to darkflow from site-packages of the virtual env
-3. copy flow outsite the original folder otherwise it doesn't work ( example create a folder flowdir and put it inside)
-
-## Testing installation ##
+#### Testing installation ####
 1. ```source activate drAIver```
 2. execute script
 ```python
@@ -69,3 +48,32 @@ def get_available_gpus():
 get_available_gpus()
 ```
 
+### Link tensorflow-models library into python env ###
+1. Clone [tensorflow-models](https://github.com/tensorflow/models)
+```sh
+git clone https://github.com/tensorflow/models.git tensorflow-models
+ ```
+
+2. Compile protobuf with
+```sh
+# From tensorflow-models/research/
+protoc object_detection/protos/*.proto --python_out=.
+ ```
+
+3. link libraries to current virtual env
+```sh
+ln -s <<PATH-TO-TENSORFLOW-MODEL>>tensorflow-models/research/* <<ANACONDA-INSTALLATION-DIR>>/anaconda3/envs/drAIver/lib/python3.5/site-packages/
+ln -s <<PATH-TO-TENSORFLOW-MODEL>>/tensorflow-models/research/slim/* <<ANACONDA-INSTALLATION-DIR>>/anaconda3/envs/drAIver/lib/python3.5/site-packages/
+ ```
+
+### Install darkflow ###
+ [Install darkflow](https://github.com/thtrieu/darkflow)
+
+ // TODO complete
+
+#### WARNING:  windows installation ####
+
+// FIXME not precise
+1. for windows copy rc.exe e rcdll.dll to visual studio bin directory
+2. create shorcut to darkflow from site-packages of the virtual env
+3. copy flow outsite the original folder otherwise it doesn't work ( example create a folder flowdir and put it inside)
