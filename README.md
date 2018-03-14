@@ -1,12 +1,18 @@
 # DrAIver #
 
+# WORK IN PROGRESS!!!!
+
 In order to use the drAIver robot we need to perform some setup steps.
 
-## Install PC environment ##
+## Setup ##
 
-To setup the PC or Computer environments follow the instructions [here]().
+### Install PC environment ###
 
-## Robot setup ##
+To setup the PC or Computer environments follow the instructions [here](https://github.com/MarcoSignoretto/drAIver/blob/master/readme/ENVIRONMENT_SETUP.md).
 
-To prepare and configure the robot follow the instructions [here]()
+### Robot setup ###
 
+To prepare and configure the robot follow the instructions [here](https://github.com/MarcoSignoretto/drAIver/blob/master/readme/ROBOT_SETUP.md)
+
+
+## Usage ##
