@@ -35,6 +35,15 @@ WARNING: not all the possible environment combinations are present on ```setup/e
 ### Create the environment ###
 Open terminal and execute:  ```conda env create -f setup/env/<your_environment>```
 
+### Link anaconda envs ###
+
+In order to run scripts without problems we need to create a symbolic link from ```/envs``` to ```/home/<user>/anaconda3/envs```
+
+```bash
+cd /
+sudo ln -s ~/anaconda3/envs/ envs/
+```
+
 #### Testing installation ####
 1. ```source activate drAIver```
 2. execute script
