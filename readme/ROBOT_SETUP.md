@@ -67,12 +67,7 @@ mkvirtualenv cv -p python3
 workon drAIver # if terminal prepend (drAIver) all is ok
 ```
 
-
 ## Install OpenCv3 with Python3 ##
-
-// TODO complete
-
-instructions: http://www.pyimagesearch.com/2016/04/18/install-guide-raspberry-pi-3-raspbian-jessie-opencv-3/
 
 ### Install dependencies ###
 
