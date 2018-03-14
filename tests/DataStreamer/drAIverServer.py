@@ -1,5 +1,4 @@
-# This script must be executed on the drAIver robot
-# Driver is the server because it has the access point configured
+#!/envs/drAIver/bin/python
 
 import socket
 import cv2
