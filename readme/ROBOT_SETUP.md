@@ -200,8 +200,13 @@ sudo nano /etc/samba/smb.conf
 
 at the bottom of the file add these lines:
 ```sh
-TODO complete and remove link
+[drAIverShare]
+   comment=drAIver shared folder
+   path=/home/pi/share
+   browseable=Yes
+   writeable=Yes
+   only guest=no
+   create mask=0777
+   directory mask=0777
+   public=no
 ```
-
-
-https://raspberrypihq.com/how-to-share-a-folder-with-a-windows-computer-from-a-raspberry-pi/
