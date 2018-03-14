@@ -16,11 +16,11 @@ def main():
     # gaussian a difficoltà sul molto scuro
 
     #img = cv2.imread("/Users/marco/Documents/Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000009.png")
-    #img = cv2.imread("/Users/marco/Documents/Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000014.png")
+    img = cv2.imread("/Users/marco/Documents/Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000014.png")
     #img = cv2.imread("/Users/marco/Documents/Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000024.png")  # bad ( bad with -40)  <= very big problem
     #img = cv2.imread("/Users/marco/Documents/Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000044.png")
     #img = cv2.imread("/Users/marco/Documents/Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000047.png") # more or less ( otzu very good here )
-    img = cv2.imread("/Users/marco/Documents/Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000071.png")  # more or less ( otzu very bad here )
+    #img = cv2.imread("/Users/marco/Documents/Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000071.png")  # more or less ( otzu very bad here )
     #img = cv2.imread("/Users/marco/Documents/Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000123.png")
     # linee trateggiate
     #img = cv2.imread("/Users/marco/Documents/Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000081.png")
