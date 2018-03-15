@@ -41,7 +41,7 @@ In order to run scripts without problems we need to create a symbolic link from 
 
 ```bash
 cd /
-sudo ln -s ~/anaconda3/envs/ envs/
+sudo ln -s ~/anaconda3/envs/ envs
 ```
 
 #### Testing installation ####
