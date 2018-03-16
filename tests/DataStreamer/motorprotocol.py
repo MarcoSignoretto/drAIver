@@ -1,5 +1,8 @@
 class MotorProtocol:
 
+
+    # TODO improve protocol use only 2 bytes with speed only range -100 +100
+
     # most significative bit is the motor identifier ( 1 is left, 0 is right)
     MOTOR_LEFT = 0x8000
     MOTOR_RIGHT = 0x0000
