@@ -3,19 +3,11 @@ class MotorProtocol:
 
     # TODO improve protocol use only 2 bytes with speed only range -100 +100
 
-    # most significative bit is the motor identifier ( 1 is left, 0 is right)
-    MOTOR_LEFT = 0x8000
-    MOTOR_RIGHT = 0x0000
+    MOTOR_SPEED_MASK = 0xFF  # get also the direction
 
-    # less significative bit of the most significative byte is the motor direction (1 back, 0 forth)
-    #MOTOR_BACK = 0x0100
-    #MOTOR_FORTH = 0x0000
-
-    MOTOR_SPEED_MASK = 0x01FF  # get also the direction
-
-    COMMUNICATION_MASK = 0xFFFFFFFF  # 4 bytes
-    COMMUNICATION_PACKET_SIZE = 4  # 4 bytes in communication
-    MOTOR_PACKET_MASK = 0x0000FFFF
+    COMMUNICATION_MASK = 0xFFFF  # 2 bytes
+    COMMUNICATION_PACKET_SIZE = 2  # 2 bytes in communication
+    MOTOR_PACKET_MASK = 0x00FF
 
     def pack(self, motor, speed):
         """
@@ -67,7 +59,7 @@ class MotorProtocol:
             pack = MotorProtocol.merge(MotorProtocol.pack(MOTOR_LEFT, 100), MotorProtocol.pack(MOTOR_RIGHT, 100))
         """
 
-        packet = motor_left_packet << 16
+        packet = motor_left_packet << 8
         packet = packet ^ motor_right_packet
         packet = packet & self.COMMUNICATION_MASK
         return packet
@@ -75,13 +67,8 @@ class MotorProtocol:
     def split(self, packet):
 
         right_packet = packet & self.MOTOR_PACKET_MASK
-        left_packet = (packet >> 16) & self.MOTOR_PACKET_MASK
+        left_packet = (packet >> 8) & self.MOTOR_PACKET_MASK
         return left_packet, right_packet
-
-    def decompose(self, packet):
-        speed = (packet & self.MOTOR_SPEED_MASK)
-        motor = (packet >> 15) & 0x0001  # keep most significative bit
-        return motor, speed
 
 
 
