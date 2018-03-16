@@ -9,7 +9,7 @@ class MotorProtocol:
     COMMUNICATION_PACKET_SIZE = 2  # 2 bytes in communication
     MOTOR_PACKET_MASK = 0x00FF
 
-    def pack(self, motor, speed):
+    def pack(self, speed):
         """
         pack(motor, speed)
 
@@ -17,10 +17,8 @@ class MotorProtocol:
 
             Parameters
             ----------
-            motor : int
-                Motor identifier ( MotorProtocol.MOTOR_LEFT or MotorProtocol.MOTOR_RIGHT
             speed : int
-                Motor speed a value between -255 and 255, negative means back direction, positive is forth direction
+                Motor speed a value between -100 and 100, negative means back direction, positive is forth direction
             Returns
             -------
             out : int
@@ -29,11 +27,10 @@ class MotorProtocol:
             Examples
             --------
 
-            pack = MotorProtocol.pack(MOTOR_LEFT, 100)
+            pack = MotorProtocol.pack(100)
         """
 
         packet = speed & self.MOTOR_SPEED_MASK
-        packet = packet ^ motor
         return packet
 
     def merge(self, motor_left_packet, motor_right_packet):

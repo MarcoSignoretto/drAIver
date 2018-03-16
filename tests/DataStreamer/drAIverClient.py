@@ -61,8 +61,8 @@ def motion_task():
     running = True
     while running:
 
-        left_packet = mp.pack(MotorProtocol.MOTOR_LEFT, 0)
-        right_packet = mp.pack(MotorProtocol.MOTOR_RIGHT, 0)
+        left_packet = mp.pack(0)
+        right_packet = mp.pack(0)
 
         if keyboard.is_pressed('q'):
             running = False
@@ -70,19 +70,19 @@ def motion_task():
 
         if keyboard.is_pressed('e'):
             print("Motor Left Forth")
-            left_packet = mp.pack(MotorProtocol.MOTOR_LEFT, SPEED)
+            left_packet = mp.pack(SPEED)
 
         elif keyboard.is_pressed('d'):
             print("Motor Left Back")
-            left_packet = mp.pack(MotorProtocol.MOTOR_LEFT, -SPEED)
+            left_packet = mp.pack(-SPEED)
 
         if keyboard.is_pressed('p'):
             print("Motor Right Forth")
-            right_packet = mp.pack(MotorProtocol.MOTOR_RIGHT, SPEED)
+            right_packet = mp.pack(SPEED)
 
         elif keyboard.is_pressed('l'):
             print("Motor Right Back")
-            right_packet = mp.pack(MotorProtocol.MOTOR_RIGHT, -SPEED)
+            right_packet = mp.pack(-SPEED)
 
         packet = mp.merge(left_packet, right_packet)
         sock.send(packet.to_bytes(MotorProtocol.COMMUNICATION_PACKET_SIZE, byteorder='big'))
@@ -96,22 +96,7 @@ if __name__ == '__main__':
     motion_thread = Thread(target=motion_task)
     motion_thread.start()
 
-    #image_thread = Thread(target=image_task)
-    #image_thread.start()
-
     image_task()
-
-
-    #
-
-    # motion_task()
-
-
-    # left_motor_thread = Thread(target=left_motor_task)
-    # left_motor_thread.start()
-    #
-    # right_motor_thread = Thread(target=right_motor_task)
-    # right_motor_thread.start()
 
 
 
