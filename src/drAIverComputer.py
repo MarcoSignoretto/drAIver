@@ -6,6 +6,7 @@ import numpy as np
 import keyboard
 from threading import Thread
 from communication.motorprotocol import MotorProtocol
+import detectors.line_detector as ld
 import time
 
 OUTPUT_PORT = 10001
@@ -16,6 +17,8 @@ FRAME_HEIGHT = 480
 FPS = 30
 
 SPEED = 50
+
+LINE_DETECTOR_NEGATE = True
 
 def recvall(sock, count):
 
@@ -41,6 +44,11 @@ def image_task():
         stringData_left = recvall(sock, int(length_left))
         data_left = np.fromstring(stringData_left, dtype='uint8')
         decimg_left = cv2.imdecode(data_left, 1)
+
+        # Performs operations here
+        ld.detect(decimg_left, negate = LINE_DETECTOR_NEGATE)
+
+
 
         cv2.imshow('CLIENT_LEFT', decimg_left)
         key = cv2.waitKey(1) & 0xFF
