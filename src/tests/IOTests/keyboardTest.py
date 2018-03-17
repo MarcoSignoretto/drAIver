@@ -1,3 +1,5 @@
+#!/envs/drAIver/bin/python
+
 import keyboard
 
 #keyboard.add_hotkey('p', print)

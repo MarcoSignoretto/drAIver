@@ -16,7 +16,7 @@ FPS = 30
 OUTPUT_PORT = 10000
 INPUT_PORT = 10001
 
-COMMUNICATION_END = 0x01000000
+COMMUNICATION_END = 0xFFFF
 
 def recvall(sock, count):
 
@@ -94,11 +94,7 @@ def motion_task():
         packet = int.from_bytes(recvall(conn, MotorProtocol.COMMUNICATION_PACKET_SIZE), byteorder='big') & MotorProtocol.COMMUNICATION_MASK
         print(packet)
 
-        left_packet, right_packet = mp.split(packet)
-        _, left_speed = mp.decompose(left_packet)
-        _, right_speed = mp.decompose(right_packet)
-
-        # TODO fix negative number
+        left_speed, right_speed = mp.split(packet)
 
         print("LEFT: "+str(left_speed))
         print("RIGHT: "+str(right_speed))

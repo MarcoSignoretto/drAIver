@@ -37,11 +37,11 @@ Open terminal and execute:  ```conda env create -f setup/env/<your_environment>`
 
 ### Link anaconda envs ###
 
-In order to run scripts without problems we need to create a symbolic link from ```/envs``` to ```/home/<user>/anaconda3/envs```
+In order to run scripts without problems we need to create a symbolic link from ```/envs``` to ```~/anaconda3/envs```
 
 ```bash
 cd /
-sudo ln -s ~/anaconda3/envs/ envs/
+sudo ln -s ~/anaconda3/envs/ envs
 ```
 
 #### Testing installation ####

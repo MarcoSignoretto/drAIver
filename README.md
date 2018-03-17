@@ -33,3 +33,7 @@ To prepare and configure the robot follow the instructions [here](https://github
 ### Connect to the Samba shared folder ###
 
 The parameters to connect to the shared folder are: ```smb://pi@drAIver.local``` and prompt the password ```robots1234```
+
+## References ##
+
+[BrickPi3 Documentation](http://www.aplu.ch/classdoc/dexter/brickpi3.BrickPi3-class.html)
