@@ -3,6 +3,11 @@ import numpy as np
 import math
 import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
+from sklearn.cluster import DBSCAN
+from sklearn import metrics
+from sklearn.preprocessing import StandardScaler
+
+
 
 HEIGHT = 480
 WIDTH = 640
@@ -67,6 +72,105 @@ def rho_theta_test():
 
     cv2.imshow("frame", img)
 
+
+def cluster_lines(line_points):
+    line_points = StandardScaler().fit_transform(line_points)
+
+    colors = np.array([x for x in 'bgrcmykbgrcmykbgrcmykbgrcmyk'])
+    colors = np.hstack([colors] * 20)
+
+
+    # Compute DBSCAN
+    db = DBSCAN(eps=0.1, min_samples=2).fit(line_points)
+    core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
+    core_samples_mask[db.core_sample_indices_] = True
+    labels = db.labels_
+
+    # Number of clusters in labels, ignoring noise if present.
+    n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
+
+    print('Estimated number of clusters: %d' % n_clusters_)
+    # print("Homogeneity: %0.3f" % metrics.homogeneity_score(labels_true, labels))
+    # print("Completeness: %0.3f" % metrics.completeness_score(labels_true, labels))
+    # print("V-measure: %0.3f" % metrics.v_measure_score(labels_true, labels))
+    # print("Adjusted Rand Index: %0.3f"
+    #       % metrics.adjusted_rand_score(labels_true, labels))
+    # print("Adjusted Mutual Information: %0.3f"
+    #       % metrics.adjusted_mutual_info_score(labels_true, labels))
+    # print("Silhouette Coefficient: %0.3f"
+    #       % metrics.silhouette_score(X, labels))
+
+    # #############################################################################
+
+    #if hasattr(db, 'labels_'):
+    y_pred = db.labels_.astype(np.int)
+    #else:
+    #    y_pred = db.predict(line_points)
+
+
+    for i in range(0,len(line_points)):
+        plt.scatter(line_points[i][0], line_points[i][1], color=colors[y_pred[i]].tolist(), s=10)
+
+    # # Plot result
+    #
+    # # Black removed and is used for noise instead.
+    # unique_labels = set(labels)
+    # colors = [plt.cm.Spectral(each)
+    #           for each in np.linspace(0, 1, len(unique_labels))]
+    # for k, col in zip(unique_labels, colors):
+    #     if k == -1:
+    #         # Black used for noise.
+    #         col = [0, 0, 0, 1]
+    #
+    #     class_member_mask = (labels == k)
+    #
+    #     xy = line_points[class_member_mask & core_samples_mask]
+    #     plt.plot(xy[:, 0], xy[:, 1], 'o', markerfacecolor=tuple(col),
+    #              markeredgecolor='k', markersize=14)
+    #
+    #     xy = line_points[class_member_mask & ~core_samples_mask]
+    #     plt.plot(xy[:, 0], xy[:, 1], 'o', markerfacecolor=tuple(col),
+    #              markeredgecolor='k', markersize=6)
+
+    plt.title('Estimated number of clusters: %d' % n_clusters_)
+    plt.show()
+    return db
+
+
+def kmeans(line_points):
+    kmeans = KMeans(n_clusters=10, random_state=0).fit(line_points)
+    # >> > kmeans.labels_
+    # array([0, 0, 0, 1, 1, 1], dtype=int32)
+    # >> > kmeans.predict([[0, 0], [4, 4]])
+    # array([0, 1], dtype=int32)
+    # >> > kmeans.cluster_centers_
+    # array([[1., 2.],
+    #        [4., 2.]])
+
+    for p, l in zip(line_points, kmeans.labels_):
+        if l == 1:
+            color = "blue"
+        else:
+            color = "red"
+        plt.scatter(p[0], p[1], color=color)
+
+    for line in kmeans.cluster_centers_:
+        plt.scatter(line[0], line[1], color="green")
+
+        a = math.cos(line[1])
+        b = math.sin(line[1])
+
+        x0 = a * line[0]
+        y0 = b * line[0]
+
+        pt1 = (int(round(x0 + 1000 * (-b))), int(round(y0 + 1000 * (a))))
+        # pt1 = (int(round(y0 + 1000 * (a))), int(round(x0 + 1000 * (-b))))
+        pt2 = (int(round(x0 - 1000 * (-b))), int(round(y0 - 1000 * (a))))
+        # pt2 = (int(round(y0 - 1000 * (a))), int(round(x0 - 1000 * (-b))))
+
+        cv2.line(img, pt1, pt2, (128, 55, 23), thickness=3, lineType=cv2.LINE_8)
+
+    plt.show()
 
 
 def detect(img, negate = False):
@@ -133,45 +237,43 @@ def detect(img, negate = False):
     plt.scatter(rhos, thetas)
     plt.show()
 
+
     line_points = [list(t) for t in zip(rhos, thetas)]
 
-    kmeans = KMeans(n_clusters=10, random_state=0).fit(line_points)
-    # >> > kmeans.labels_
-    # array([0, 0, 0, 1, 1, 1], dtype=int32)
-    # >> > kmeans.predict([[0, 0], [4, 4]])
-    # array([0, 1], dtype=int32)
-    # >> > kmeans.cluster_centers_
-    # array([[1., 2.],
-    #        [4., 2.]])
+    # ===== CLUSTERING ============
 
-    for p,l in zip(line_points, kmeans.labels_):
-        if l == 1 :
-            color = "blue"
-        else:
-            color = "red"
-        plt.scatter(p[0], p[1], color=color)
+    cluster_result = cluster_lines(line_points)
 
+    labels = cluster_result.labels_
+    n_clusters = len(set(labels)) - (1 if -1 in labels else 0)
+    cluster_items = {}
+    for i in range(0,n_clusters):
+        cluster_items[i] = []
+
+    for i in range(0, len(labels)):
+        cluster = labels[i]
+        if cluster != -1:
+            cluster_items[cluster].append(np.asarray(line_points[i]))
 
 
+    centroids = []
+    for key, value in cluster_items.items():
+        centroids.append(np.asarray(value).mean(axis=0))
 
+    for center in centroids:
+        a = math.cos(center[1])
+        b = math.sin(center[1])
 
-    for line in kmeans.cluster_centers_:
-        plt.scatter(line[0], line[1], color="green")
-
-        a = math.cos(line[1])
-        b = math.sin(line[1])
-
-        x0 = a * line[0]
-        y0 = b * line[0]
+        x0 = a * center[0]
+        y0 = b * center[0]
 
         pt1 = (int(round(x0 + 1000 * (-b))), int(round(y0 + 1000 * (a))))
-        #pt1 = (int(round(y0 + 1000 * (a))), int(round(x0 + 1000 * (-b))))
+        # pt1 = (int(round(y0 + 1000 * (a))), int(round(x0 + 1000 * (-b))))
         pt2 = (int(round(x0 - 1000 * (-b))), int(round(y0 - 1000 * (a))))
-        #pt2 = (int(round(y0 - 1000 * (a))), int(round(x0 - 1000 * (-b))))
+        # pt2 = (int(round(y0 - 1000 * (a))), int(round(x0 - 1000 * (-b))))
 
-        cv2.line(img, pt1, pt2, (128, 55, 23), thickness=3, lineType=cv2.LINE_8)
+        cv2.line(img, pt1, pt2, (28, 155, 23), thickness=3, lineType=cv2.LINE_8)
 
-    plt.show()
 
     cv2.imshow("Img", img)
     cv2.imshow("Gray", gray)
@@ -192,6 +294,7 @@ if __name__ == '__main__':
     # Adaptive gaussian or mean ( gaussian is a bit better )
     # gaussian a difficoltà sul molto scuro
 
+    #img = cv2.imread(BASE_PATH + "Datasets/drAIver/line_detection/street.jpg")
     img = cv2.imread(BASE_PATH + "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000009.png")
     # img = cv2.imread(BASE_PATH + "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000014.png")
     # img = cv2.imread(BASE_PATH + "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000024.png")  # bad ( bad with -40)  <= very big problem
