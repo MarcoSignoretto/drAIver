@@ -133,7 +133,7 @@ def kmeans(line_points):
         cv2.line(img, pt1, pt2, (128, 55, 23), thickness=3, lineType=cv2.LINE_8)
 
 
-def find_intersections(lines):
+def find_intersections(lines, reference):
 
     intersection_x = []
 
@@ -142,14 +142,14 @@ def find_intersections(lines):
         rho = line[0]
         if np.cos(theta) != 0:
             m = np.tan(theta)
-            q = INTERSECTION_LINE - np.sin(theta) * rho
-            x = (INTERSECTION_LINE - q) / m
+            q = reference - np.sin(theta) * rho
+            x = (reference - q) / m
         else:
             x = rho #TODO test
 
         intersection_x.append(x)
 
-
+    return intersection_x
 
 
 def detect(img, negate = False):
@@ -159,26 +159,7 @@ def detect(img, negate = False):
     if negate:
         gray = abs(255 - gray)
 
-    #value , thr = cv2.threshold(gray, 0, 255, cv2.THRESH_OTSU) # otzu works very bad with light conditions
-
-    th2 = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 31, -35) # maybe use a bit little biass
-    #th3 = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 31, -15)
-
-    #kernel = np.ones((3, 3), np.uint8)
-    #th2erosion = cv2.erode(th2, kernel, iterations=1)
-    #th3erosion = cv2.erode(th3, kernel, iterations=1)
-
-    #edges = cv2.Canny(thr, 100, 200)
-
-
-
-
-
-
-
-    #erosion = cv2.erode(thr, kernel, iterations=1)
-    #dilate = cv2.dilate(edges, kernel, iterations=1)
-
+    th2 = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 31, -35)  # maybe use a bit little biass
 
     lines = cv2.HoughLines(th2, 1, np.pi/180, 200)
     filtered_lines = []
@@ -250,8 +231,6 @@ def detect(img, negate = False):
 
         cv2.line(img, pt1, pt2, (0, 0, 0), thickness=3, lineType=cv2.LINE_8)
 
-
-
     plt.show()
 
     pt1 = (0, img.shape[0]-INTERSECTION_LINE)
@@ -260,11 +239,11 @@ def detect(img, negate = False):
 
     #==================== CALCULATE INTERSECTIONS ==========================
 
-    intersections = find_intersections(centroids)
+    intersections = find_intersections(centroids, img.shape[0]-INTERSECTION_LINE)
 
-    for int in intersections:
-        if int >= 0 and int <= img.shape[1]:
-            cv2.circle(img, (int, INTERSECTION_LINE), 5, (134, 234, 100))
+    for intersection in intersections:
+        if intersection >= 0 and intersection <= img.shape[1]:
+            cv2.circle(img, (int(np.round(intersection)), img.shape[0]-INTERSECTION_LINE), 5, (134, 234, 100), thickness=2)
 
     cv2.imshow("Img", img)
     cv2.imshow("Gray", gray)
