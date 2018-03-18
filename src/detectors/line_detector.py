@@ -12,6 +12,8 @@ WIDTH = 640
 
 BASE_PATH = "/mnt/B01EEC811EEC41C8/"
 
+INTERSECTION_LINE = 70
+
 
 def compute_theta(x1, y1, x2, y2):
     if x1-x2 == 0:
@@ -131,6 +133,25 @@ def kmeans(line_points):
         cv2.line(img, pt1, pt2, (128, 55, 23), thickness=3, lineType=cv2.LINE_8)
 
 
+def find_intersections(lines):
+
+    intersection_x = []
+
+    for line in lines:
+        theta = line[1]
+        rho = line[0]
+        if np.cos(theta) != 0:
+            m = np.tan(theta)
+            q = INTERSECTION_LINE - np.sin(theta) * rho
+            x = (INTERSECTION_LINE - q) / m
+        else:
+            x = rho #TODO test
+
+        intersection_x.append(x)
+
+
+
+
 def detect(img, negate = False):
 
     gray = np.zeros((HEIGHT, WIDTH, 1), dtype=np.uint8)
@@ -233,9 +254,17 @@ def detect(img, negate = False):
 
     plt.show()
 
-    pt1 = (0, img.shape[0]-70)
-    pt2 = (img.shape[1], img.shape[0]-70)
+    pt1 = (0, img.shape[0]-INTERSECTION_LINE)
+    pt2 = (img.shape[1], img.shape[0]-INTERSECTION_LINE)
     cv2.line(img, pt1, pt2, (34, 112, 200), thickness=4, lineType=cv2.LINE_8)
+
+    #==================== CALCULATE INTERSECTIONS ==========================
+
+    intersections = find_intersections(centroids)
+
+    for int in intersections:
+        if int >= 0 and int <= img.shape[1]:
+            cv2.circle(img, (int, INTERSECTION_LINE), 5, (134, 234, 100))
 
     cv2.imshow("Img", img)
     cv2.imshow("Gray", gray)
