@@ -7,6 +7,8 @@ from sklearn.cluster import DBSCAN
 from sklearn import metrics
 from sklearn.preprocessing import StandardScaler
 
+
+
 HEIGHT = 480
 WIDTH = 640
 
@@ -35,14 +37,51 @@ def compute_rho(x1, y1, x2, y2):
         return abs(q)/np.sqrt(1.0+math.pow(m, 2))
 
 
+def rho_theta_test():
+    x1 = 100
+    y1 = 200
+
+    x2 = 100
+    y2 = 155
+
+    img = cv2.imread(BASE_PATH + "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000009.png")
+
+    img = cv2.resize(img, (WIDTH, HEIGHT))
+
+    # detect(img)
+
+    # ================= POINT ============================
+
+    cv2.line(img, (x1, y1), (x2, y2), (0, 255, 0), thickness=3, lineType=cv2.LINE_8)
+
+    # ============== RHO THETA ==========================
+
+    theta = compute_theta(x1, y1, x2, y2)
+    rho = compute_rho(x1, y1, x2, y2)
+
+    a = np.cos(theta)
+    b = np.sin(theta)
+    x0 = a * rho
+    y0 = b * rho
+    x1 = int(x0 + 1000 * (-b))
+    y1 = int(y0 + 1000 * (a))
+    x2 = int(x0 - 1000 * (-b))
+    y2 = int(y0 - 1000 * (a))
+
+    cv2.line(img, (x1, y1), (x2, y2), (0, 0, 255), thickness=2, lineType=cv2.LINE_8)
+
+    cv2.imshow("frame", img)
+
+
 def cluster_lines(line_points):
     line_points = StandardScaler().fit_transform(line_points)
 
     colors = np.array([x for x in 'bgrcmykbgrcmykbgrcmykbgrcmyk'])
     colors = np.hstack([colors] * 20)
 
+
     # Compute DBSCAN
-    db = DBSCAN(eps=0.1, min_samples=1).fit(line_points)
+    db = DBSCAN(eps=0.1, min_samples=2).fit(line_points)
     core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
     core_samples_mask[db.core_sample_indices_] = True
     labels = db.labels_
@@ -63,12 +102,13 @@ def cluster_lines(line_points):
 
     # #############################################################################
 
-    # if hasattr(db, 'labels_'):
+    #if hasattr(db, 'labels_'):
     y_pred = db.labels_.astype(np.int)
-    # else:
+    #else:
     #    y_pred = db.predict(line_points)
 
-    for i in range(0, len(line_points)):
+
+    for i in range(0,len(line_points)):
         plt.scatter(line_points[i][0], line_points[i][1], color=colors[y_pred[i]].tolist(), s=10)
 
     # # Plot result
@@ -98,7 +138,7 @@ def cluster_lines(line_points):
 
 
 def kmeans(line_points):
-    kmeans = KMeans(n_clusters=2, random_state=0).fit(line_points)
+    kmeans = KMeans(n_clusters=10, random_state=0).fit(line_points)
     # >> > kmeans.labels_
     # array([0, 0, 0, 1, 1, 1], dtype=int32)
     # >> > kmeans.predict([[0, 0], [4, 4]])
@@ -130,6 +170,8 @@ def kmeans(line_points):
 
         cv2.line(img, pt1, pt2, (128, 55, 23), thickness=3, lineType=cv2.LINE_8)
 
+    plt.show()
+
 
 def detect(img, negate = False):
 
@@ -159,40 +201,42 @@ def detect(img, negate = False):
     #dilate = cv2.dilate(edges, kernel, iterations=1)
 
 
-    lines = cv2.HoughLines(th2, 1, np.pi/180, 200)
+    lines = cv2.HoughLinesP(th2, 1, np.pi/180, 130, minLineLength=30, maxLineGap=5)
     filtered_lines = []
-    for item in lines:
+    for line in lines:
+        l = line[0]
+        print(l)
+        cv2.line(img, (l[0], l[1]), (l[2], l[3]), (0, 0, 255), thickness=3, lineType=cv2.LINE_8)
 
-        rho, theta = item[0]
 
-        a = np.cos(theta)
-        b = np.sin(theta)
-        x0 = a * rho
-        y0 = b * rho
-        x1 = int(x0 + 1000 * (-b))
-        y1 = int(y0 + 1000 * (a))
-        x2 = int(x0 - 1000 * (-b))
-        y2 = int(y0 - 1000 * (a))
 
-        cv2.line(img, (x1, y1), (x2, y2), (255, 0, 0), thickness=2, lineType=cv2.LINE_8)
 
-        if theta < 0.78 or theta > 2.35: #TODO fix theta
-            cv2.line(img, (x1, y1), (x2, y2), (0, 255, 0), thickness=1, lineType=cv2.LINE_8)
 
-            filtered_lines.append((rho,theta))
-        else:
-            print("Theta => "+str(theta))
+        # filter are for line detection
+        height, width = img.shape[:2]
+        if(l[1] > height/2 or l[3] > height/2):
+            cv2.line(img, (l[0], l[1]), (l[2], l[3]), (255, 0, 0), thickness=3, lineType=cv2.LINE_8)
+
+            # filter for angle (search vertical)
+            theta = compute_theta(l[0], l[1], l[2], l[3])
+            print(theta)
+            if (abs(theta) > 0.5): #TODO fix theta
+                cv2.line(img, (l[0], l[1]), (l[2], l[3]), (0, 255, 0), thickness=3, lineType=cv2.LINE_8)
+
+                filtered_lines.append(l)
 
     print("============ Filtered lines =============")
 
     rhos = []
     thetas = []
-    for rho, theta in filtered_lines:
-        thetas.append(theta)
-        rhos.append(rho)
+    for f_l in filtered_lines:
+        thetas.append(compute_theta(f_l[0], f_l[1], f_l[2], f_l[3]))
+        rhos.append(compute_rho(f_l[0], f_l[1], f_l[2], f_l[3]))
+        print(f_l)
 
     plt.scatter(rhos, thetas)
     plt.show()
+
 
     line_points = [list(t) for t in zip(rhos, thetas)]
 
@@ -203,13 +247,14 @@ def detect(img, negate = False):
     labels = cluster_result.labels_
     n_clusters = len(set(labels)) - (1 if -1 in labels else 0)
     cluster_items = {}
-    for i in range(0, n_clusters):
+    for i in range(0,n_clusters):
         cluster_items[i] = []
 
     for i in range(0, len(labels)):
         cluster = labels[i]
         if cluster != -1:
             cluster_items[cluster].append(np.asarray(line_points[i]))
+
 
     centroids = []
     for key, value in cluster_items.items():
@@ -227,15 +272,8 @@ def detect(img, negate = False):
         pt2 = (int(round(x0 - 1000 * (-b))), int(round(y0 - 1000 * (a))))
         # pt2 = (int(round(y0 - 1000 * (a))), int(round(x0 - 1000 * (-b))))
 
-        cv2.line(img, pt1, pt2, (0, 0, 0), thickness=3, lineType=cv2.LINE_8)
+        cv2.line(img, pt1, pt2, (28, 155, 23), thickness=3, lineType=cv2.LINE_8)
 
-
-
-    plt.show()
-
-    pt1 = (0, img.shape[0]-70)
-    pt2 = (img.shape[1], img.shape[0]-70)
-    cv2.line(img, pt1, pt2, (34, 112, 200), thickness=4, lineType=cv2.LINE_8)
 
     cv2.imshow("Img", img)
     cv2.imshow("Gray", gray)
@@ -257,20 +295,18 @@ if __name__ == '__main__':
     # gaussian a difficoltà sul molto scuro
 
     #img = cv2.imread(BASE_PATH + "Datasets/drAIver/line_detection/street.jpg")
-    #img = cv2.imread(BASE_PATH + "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000009.png")
-    #img = cv2.imread(BASE_PATH + "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000014.png")
-    #img = cv2.imread(BASE_PATH + "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000024.png")  # bad ( bad with -40)  <= very big problem
-    img = cv2.imread(BASE_PATH + "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000044.png") # problem to find correct two lines
-    #img = cv2.imread(BASE_PATH + "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000047.png") # more or less ( otzu very good here )
-    #img = cv2.imread(BASE_PATH + "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000071.png")  # more or less ( otzu very bad here )
-    #img = cv2.imread(BASE_PATH + "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000123.png")
+    img = cv2.imread(BASE_PATH + "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000009.png")
+    # img = cv2.imread(BASE_PATH + "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000014.png")
+    # img = cv2.imread(BASE_PATH + "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000024.png")  # bad ( bad with -40)  <= very big problem
+    #img = cv2.imread(BASE_PATH + "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000044.png")
+    # img = cv2.imread(BASE_PATH + "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000047.png") # more or less ( otzu very good here )
+    # img = cv2.imread(BASE_PATH + "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000071.png")  # more or less ( otzu very bad here )
+    # img = cv2.imread(BASE_PATH + "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000123.png")
     # linee trateggiate
-    #img = cv2.imread(BASE_PATH + "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000081.png")
-    #img = cv2.imread(BASE_PATH + "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000087.png")
+    # img = cv2.imread(BASE_PATH + "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000081.png")
+    # img = cv2.imread(BASE_PATH + "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000087.png")
 
     img = cv2.resize(img, (WIDTH, HEIGHT))
-
-    # TODO fix linee tratteggiate
 
     detect(img)
 
