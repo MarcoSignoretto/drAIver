@@ -76,6 +76,15 @@ cd /
 sudo ln -s ~/.virtualenvs/ envs
 ```
 
+### Link drAIver scripts as library ###
+
+In order to use drAIver scripts as library you need to import it into the ```site-packages``` folder, to do that execute the following lines of code
+
+```bash
+cd /envs/drAIver/lib/python3.4/site-packages/
+sudo ln -s <drAIver_folder>/src/ draiver
+```
+
 ## Install OpenCv3 with Python3 ##
 
 ### Install dependencies ###

@@ -5,8 +5,9 @@ import cv2
 import numpy as np
 import keyboard
 from threading import Thread
-from communication.motorprotocol import MotorProtocol
-import detectors.line_detector as ld
+from draiver.communication.motorprotocol import MotorProtocol
+from draiver.motion.motorcontroller import MotorController
+import draiver.detectors.line_detector as ld
 import time
 
 OUTPUT_PORT = 10001
@@ -32,6 +33,11 @@ def recvall(sock, count):
 
 
 def image_task():
+
+    motor_controller = MotorController()
+    motor_controller.start()
+
+
     print("Image Thread Started")
     # socket init
     server_address = (socket.gethostbyname("drAIver.local"), INPUT_PORT)
@@ -45,10 +51,13 @@ def image_task():
         data_left = np.fromstring(stringData_left, dtype='uint8')
         decimg_left = cv2.imdecode(data_left, 1)
 
-        # Performs operations here
-        ld.detect(decimg_left, negate = LINE_DETECTOR_NEGATE)
+        # ========== ELABORATE FRAME better if image sent to different thread =========
+        left, right, car_position = ld.detect(decimg_left, negate = LINE_DETECTOR_NEGATE)
+
+        motor_controller.get_queue().put((left, right, car_position))
 
 
+        #  ==================== End eleboration ================================
 
         cv2.imshow('CLIENT_LEFT', decimg_left)
         key = cv2.waitKey(1) & 0xFF

@@ -5,7 +5,7 @@ import cv2
 import numpy as np
 import time
 from threading import Thread
-from motorprotocol import MotorProtocol
+from draiver.communication.motorprotocol import MotorProtocol
 import brickpi3
 
 

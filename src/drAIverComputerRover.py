@@ -17,6 +17,8 @@ FPS = 30
 
 SPEED = 50
 
+LINE_DETECTOR_NEGATE = True
+
 def recvall(sock, count):
 
     buf = b''
@@ -41,6 +43,8 @@ def image_task():
         stringData_left = recvall(sock, int(length_left))
         data_left = np.fromstring(stringData_left, dtype='uint8')
         decimg_left = cv2.imdecode(data_left, 1)
+
+        # Performs operations here
 
         cv2.imshow('CLIENT_LEFT', decimg_left)
         key = cv2.waitKey(1) & 0xFF

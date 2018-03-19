@@ -6,6 +6,7 @@ from sklearn.cluster import KMeans
 from sklearn.cluster import DBSCAN
 from sklearn import metrics
 from sklearn.preprocessing import StandardScaler
+from draiver.motion.motorcontroller import MotorController
 
 HEIGHT = 480
 WIDTH = 640
@@ -13,6 +14,9 @@ WIDTH = 640
 BASE_PATH = "/mnt/B01EEC811EEC41C8/"
 
 INTERSECTION_LINE = 70
+
+DEBUG = True
+PLOT = False
 
 #  =========================== TESTS ==============================
 
@@ -149,13 +153,15 @@ def compute_q(rho, theta):
 def cluster_lines(line_points):
     line_points = StandardScaler().fit_transform(line_points)
 
-    colors = np.array([x for x in 'bgrcmykbgrcmykbgrcmykbgrcmyk'])
-    colors = np.hstack([colors] * 20)
+    if PLOT:
+        colors = np.array([x for x in 'bgrcmykbgrcmykbgrcmykbgrcmyk'])
+        colors = np.hstack([colors] * 20)
 
     # Compute DBSCAN
     db = DBSCAN(eps=0.1, min_samples=1).fit(line_points)
-    core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
-    core_samples_mask[db.core_sample_indices_] = True
+    if PLOT:
+        core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
+        core_samples_mask[db.core_sample_indices_] = True
     labels = db.labels_
 
     # Number of clusters in labels, ignoring noise if present.
@@ -179,32 +185,12 @@ def cluster_lines(line_points):
     # else:
     #    y_pred = db.predict(line_points)
 
-    for i in range(0, len(line_points)):
-        plt.scatter(line_points[i][0], line_points[i][1], color=colors[y_pred[i]].tolist(), s=10)
+    if PLOT:
+        for i in range(0, len(line_points)):
+            plt.scatter(line_points[i][0], line_points[i][1], color=colors[y_pred[i]].tolist(), s=10)
 
-    # # Plot result
-    #
-    # # Black removed and is used for noise instead.
-    # unique_labels = set(labels)
-    # colors = [plt.cm.Spectral(each)
-    #           for each in np.linspace(0, 1, len(unique_labels))]
-    # for k, col in zip(unique_labels, colors):
-    #     if k == -1:
-    #         # Black used for noise.
-    #         col = [0, 0, 0, 1]
-    #
-    #     class_member_mask = (labels == k)
-    #
-    #     xy = line_points[class_member_mask & core_samples_mask]
-    #     plt.plot(xy[:, 0], xy[:, 1], 'o', markerfacecolor=tuple(col),
-    #              markeredgecolor='k', markersize=14)
-    #
-    #     xy = line_points[class_member_mask & ~core_samples_mask]
-    #     plt.plot(xy[:, 0], xy[:, 1], 'o', markerfacecolor=tuple(col),
-    #              markeredgecolor='k', markersize=6)
-
-    plt.title('Estimated number of clusters: %d' % n_clusters_)
-    plt.show()
+        plt.title('Estimated number of clusters: %d' % n_clusters_)
+        plt.show()
     return db
 
 
@@ -301,11 +287,10 @@ def detect(img, negate = False):
         cv2.line(img, (x1, y1), (x2, y2), (255, 0, 0), thickness=2, lineType=cv2.LINE_8)
 
         if theta < 0.78 or theta > 2.35: #TODO fix theta
-            cv2.line(img, (x1, y1), (x2, y2), (0, 255, 0), thickness=1, lineType=cv2.LINE_8)
+            if DEBUG:
+                cv2.line(img, (x1, y1), (x2, y2), (0, 255, 0), thickness=1, lineType=cv2.LINE_8)
 
-            filtered_lines.append((rho,theta))
-        else:
-            print("Theta => "+str(theta))
+            filtered_lines.append((rho, theta))
 
     print("============ Filtered lines =============")
 
@@ -315,8 +300,9 @@ def detect(img, negate = False):
         thetas.append(theta)
         rhos.append(rho)
 
-    plt.scatter(rhos, thetas)
-    plt.show()
+    if PLOT:
+        plt.scatter(rhos, thetas)
+        plt.show()
 
     line_points = [list(t) for t in zip(rhos, thetas)]
 
@@ -351,13 +337,17 @@ def detect(img, negate = False):
         pt2 = (int(round(x0 - 1000 * (-b))), int(round(y0 - 1000 * (a))))
         # pt2 = (int(round(y0 - 1000 * (a))), int(round(x0 - 1000 * (-b))))
 
-        cv2.line(img, pt1, pt2, (0, 0, 0), thickness=3, lineType=cv2.LINE_8)
+        if DEBUG:
+            cv2.line(img, pt1, pt2, (0, 0, 0), thickness=3, lineType=cv2.LINE_8)
 
-    plt.show()
+    if PLOT:
+        plt.show()
 
     pt1 = (0, img.shape[0]-INTERSECTION_LINE)
     pt2 = (img.shape[1], img.shape[0]-INTERSECTION_LINE)
-    cv2.line(img, pt1, pt2, (34, 112, 200), thickness=4, lineType=cv2.LINE_8)
+
+    if DEBUG:
+        cv2.line(img, pt1, pt2, (34, 112, 200), thickness=4, lineType=cv2.LINE_8)
 
     #==================== CALCULATE INTERSECTIONS ==========================
 
@@ -365,7 +355,8 @@ def detect(img, negate = False):
 
     for intersection in intersections:
         if intersection >= 0 and intersection <= img.shape[1]:
-            cv2.circle(img, (int(np.round(intersection)), img.shape[0]-INTERSECTION_LINE), 5, (134, 234, 100), thickness=2)
+            if DEBUG:
+                cv2.circle(img, (int(np.round(intersection)), img.shape[0]-INTERSECTION_LINE), 5, (134, 234, 100), thickness=2)
 
     #==================== FIND 2 ROAD LINES ========================
 
@@ -373,23 +364,24 @@ def detect(img, negate = False):
 
     left, right = filter_road_lines(car_position, intersections, img.shape[1])
 
-    cv2.circle(img, (int(np.round(left)), img.shape[0] - INTERSECTION_LINE), 5, (0, 0, 255), thickness=2)
-    cv2.circle(img, (int(np.round(right)), img.shape[0] - INTERSECTION_LINE), 5, (0, 0, 255), thickness=2)
+    if DEBUG:
+        cv2.circle(img, (int(np.round(left)), img.shape[0] - INTERSECTION_LINE), 5, (0, 0, 255), thickness=2)
+        cv2.circle(img, (int(np.round(right)), img.shape[0] - INTERSECTION_LINE), 5, (0, 0, 255), thickness=2)
 
-    cv2.imshow("Gray", gray)
-    # cv2.imshow("Otzu", thr)
-    cv2.imshow("Adapt mean", th2)
-    cv2.imshow("Img", img)
-    # cv2.imshow("Adapt gaussian", th3)
-    # cv2.imshow("Canny", edges)
-    # cv2.imshow("CannyDilated", dilate)
-    # cv2.imshow("Adapt mean erosion", th2erosion)
-    # cv2.imshow("Adapt gaussian erosion", th3erosion)
-    # cv2.imshow("erosion", erosion)
+        cv2.imshow("Gray", gray)
+        # cv2.imshow("Otzu", thr)
+        cv2.imshow("Adapt mean", th2)
+        cv2.imshow("Img", img)
+        # cv2.imshow("Adapt gaussian", th3)
+        # cv2.imshow("Canny", edges)
+        # cv2.imshow("CannyDilated", dilate)
+        # cv2.imshow("Adapt mean erosion", th2erosion)
+        # cv2.imshow("Adapt gaussian erosion", th3erosion)
+        # cv2.imshow("erosion", erosion)
 
-    cv2.waitKey(1)
+        cv2.waitKey(1)
 
-    return left, right
+    return left, right, car_position
 
 
 if __name__ == '__main__':
@@ -414,7 +406,12 @@ if __name__ == '__main__':
 
     # TODO fix linee tratteggiate
 
-    detect(img)
+    left, right, car_position = detect(img)
+
+    motor_controller = MotorController()
+    motor_controller.start()
+    motor_controller.get_queue().put((left, right, car_position))
+
     cv2.imshow("Frame", img)
 
     cv2.waitKey(0)
