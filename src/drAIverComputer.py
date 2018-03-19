@@ -34,12 +34,13 @@ def image_task():
     motor_controller = MotorController()
     motor_controller.start()
 
-
     print("Image Thread Started")
     # socket init
     server_address = (socket.gethostbyname("drAIver.local"), INPUT_PORT)
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.connect(server_address)
+
+
 
     key = ''
     while key != ord('q'):

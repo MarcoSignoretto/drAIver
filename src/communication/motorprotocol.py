@@ -1,3 +1,6 @@
+import numpy as np
+
+
 class MotorProtocol:
 
 
@@ -29,7 +32,7 @@ class MotorProtocol:
 
             pack = MotorProtocol.pack(100)
         """
-
+        speed = int(np.round(speed))
         packet = speed & self.MOTOR_SPEED_MASK
         return packet
 
