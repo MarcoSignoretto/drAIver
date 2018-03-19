@@ -261,6 +261,19 @@ def find_intersections(lines, reference):
     return intersection_x
 
 
+def filter_road_lines(car_position, intersections, image_width):
+    left = 0
+    right = image_width
+
+    for intersection in intersections:
+        if intersection < car_position and left < intersection:
+            left = intersection
+        elif intersection > car_position and right > intersection:
+            right = intersection
+
+    return left, right
+
+
 def detect(img, negate = False):
 
     gray = np.zeros((HEIGHT, WIDTH, 1), dtype=np.uint8)
@@ -354,20 +367,29 @@ def detect(img, negate = False):
         if intersection >= 0 and intersection <= img.shape[1]:
             cv2.circle(img, (int(np.round(intersection)), img.shape[0]-INTERSECTION_LINE), 5, (134, 234, 100), thickness=2)
 
+    #==================== FIND 2 ROAD LINES ========================
+
+    car_position = img.shape[1] / 2
+
+    left, right = filter_road_lines(car_position, intersections, img.shape[1])
+
+    cv2.circle(img, (int(np.round(left)), img.shape[0] - INTERSECTION_LINE), 5, (0, 0, 255), thickness=2)
+    cv2.circle(img, (int(np.round(right)), img.shape[0] - INTERSECTION_LINE), 5, (0, 0, 255), thickness=2)
 
     cv2.imshow("Gray", gray)
-    #cv2.imshow("Otzu", thr)
+    # cv2.imshow("Otzu", thr)
     cv2.imshow("Adapt mean", th2)
     cv2.imshow("Img", img)
-    #cv2.imshow("Adapt gaussian", th3)
-    #cv2.imshow("Canny", edges)
-    #cv2.imshow("CannyDilated", dilate)
-    #cv2.imshow("Adapt mean erosion", th2erosion)
-    #cv2.imshow("Adapt gaussian erosion", th3erosion)
-    #cv2.imshow("erosion", erosion)
+    # cv2.imshow("Adapt gaussian", th3)
+    # cv2.imshow("Canny", edges)
+    # cv2.imshow("CannyDilated", dilate)
+    # cv2.imshow("Adapt mean erosion", th2erosion)
+    # cv2.imshow("Adapt gaussian erosion", th3erosion)
+    # cv2.imshow("erosion", erosion)
 
     cv2.waitKey(1)
 
+    return left, right
 
 
 if __name__ == '__main__':
@@ -375,7 +397,7 @@ if __name__ == '__main__':
     # gaussian a difficoltà sul molto scuro
 
     #img = cv2.imread(BASE_PATH + "Datasets/drAIver/line_detection/street.jpg")
-    img = cv2.imread(BASE_PATH + "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000009.png")
+    #img = cv2.imread(BASE_PATH + "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000009.png")
     #img = cv2.imread(BASE_PATH + "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000014.png")
     #img = cv2.imread(BASE_PATH + "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000024.png")  # bad ( bad with -40)  <= very big problem
     #img = cv2.imread(BASE_PATH + "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000044.png") # problem to find correct two lines
@@ -384,15 +406,16 @@ if __name__ == '__main__':
     #img = cv2.imread(BASE_PATH + "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000123.png")
     # linee trateggiate
     #img = cv2.imread(BASE_PATH + "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000081.png")
-    #img = cv2.imread(BASE_PATH + "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000087.png")
+    img = cv2.imread(BASE_PATH + "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000087.png")
 
     img = cv2.resize(img, (WIDTH, HEIGHT))
+
+    # TODO cut image on half to have strongest line detection and avoid noise
 
     # TODO fix linee tratteggiate
 
     detect(img)
-
-
+    cv2.imshow("Frame", img)
 
     cv2.waitKey(0)
     cv2.destroyAllWindows()
