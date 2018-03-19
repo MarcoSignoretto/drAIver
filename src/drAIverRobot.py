@@ -18,6 +18,7 @@ INPUT_PORT = 10001
 
 COMMUNICATION_END = 0xFFFF
 
+
 def recvall(sock, count):
 
     buf = b''
@@ -30,79 +31,101 @@ def recvall(sock, count):
 
 
 def image_task():
-    print("Image Thread Started")
+    sock = None
+    conn = None
+    try:
+        print("Image Thread Started")
 
-    # camera init
-    vc = cv2.VideoCapture()
-    vc.open(0)
-    time.sleep(1)  # without this camera setup failed
-    print(vc.set(cv2.CAP_PROP_FRAME_WIDTH, FRAME_WIDTH))
-    print(vc.set(cv2.CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT))
-    print(vc.set(cv2.CAP_PROP_FPS, FPS))
-    time.sleep(1)  # without this camera setup failed
-
-
-    # socket init
-    server_address = (socket.gethostbyname("drAIver.local"), OUTPUT_PORT)
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.bind(server_address)
-    sock.listen(True)
-    print("Image task waiting...")
-    conn, addr = sock.accept()
-    print("Image task connected")
+        # camera init
+        vc = cv2.VideoCapture()
+        vc.open(0)
+        time.sleep(1)  # without this camera setup failed
+        print(vc.set(cv2.CAP_PROP_FRAME_WIDTH, FRAME_WIDTH))
+        print(vc.set(cv2.CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT))
+        print(vc.set(cv2.CAP_PROP_FPS, FPS))
+        time.sleep(1)  # without this camera setup failed
 
 
-    while True:
+        # socket init
+        server_address = (socket.gethostbyname("drAIver.local"), OUTPUT_PORT)
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.bind(server_address)
+        sock.listen(True)
+        print("Image task waiting...")
+        conn, addr = sock.accept()
+        print("Image task connected")
 
-        if vc.isOpened():
 
-            ret_left, frame_left = vc.read()
-            if ret_left:
-                # encodind frma in JPEG format to obtain better transmission speed
-                encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 100]
-                # =========== LEFT IMAGE ============
-                result_left, imgencode_left = cv2.imencode('.jpg', frame_left, encode_param)
+        while True:
 
-                # transform image in np.array
-                data_left = np.array(imgencode_left)
-                stringData_left = data_left.tostring()
+            if vc.isOpened():
 
-                # send chunk
-                conn.send(str(len(stringData_left)).ljust(16).encode())
-                conn.send(stringData_left)
+                ret_left, frame_left = vc.read()
+                if ret_left:
+                    # encodind frma in JPEG format to obtain better transmission speed
+                    encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 100]
+                    # =========== LEFT IMAGE ============
+                    result_left, imgencode_left = cv2.imencode('.jpg', frame_left, encode_param)
 
-    cv2.destroyAllWindows()
-    conn.close()
+                    # transform image in np.array
+                    data_left = np.array(imgencode_left)
+                    stringData_left = data_left.tostring()
+
+                    # send chunk
+                    conn.send(str(len(stringData_left)).ljust(16).encode())
+                    conn.send(stringData_left)
+    except:
+        print("Exception Image task")
+    finally:
+        cv2.destroyAllWindows()
+        if conn is not None:
+            conn.close()
+        if sock is not None:
+            sock.close()
+
 
 def motion_task():
-    print("Motion Thread Started")
-    # socket init
-    server_address = (socket.gethostbyname("drAIver.local"), INPUT_PORT)
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.bind(server_address)
-    sock.listen(True)
-    print("Motion task waiting ...")
-    conn, addr = sock.accept()
-    print("Motion task connected")
+    BP = None
+    sock = None
+    conn = None
+    try:
+        print("Motion Thread Started")
+        # socket init
+        server_address = (socket.gethostbyname("drAIver.local"), INPUT_PORT)
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.bind(server_address)
+        sock.listen(True)
+        print("Motion task waiting ...")
+        conn, addr = sock.accept()
+        print("Motion task connected")
 
-    BP = brickpi3.BrickPi3()
+        BP = brickpi3.BrickPi3()
 
-    mp = MotorProtocol()
+        mp = MotorProtocol()
 
-    packet = int.from_bytes(recvall(conn, MotorProtocol.COMMUNICATION_PACKET_SIZE), byteorder='big') & MotorProtocol.COMMUNICATION_MASK
-    while packet != COMMUNICATION_END:
         packet = int.from_bytes(recvall(conn, MotorProtocol.COMMUNICATION_PACKET_SIZE), byteorder='big') & MotorProtocol.COMMUNICATION_MASK
-        print(packet)
+        while packet != COMMUNICATION_END:
+            packet = int.from_bytes(recvall(conn, MotorProtocol.COMMUNICATION_PACKET_SIZE), byteorder='big') & MotorProtocol.COMMUNICATION_MASK
+            print(packet)
 
-        left_speed, right_speed = mp.split(packet)
+            left_speed, right_speed = mp.split(packet)
 
-        print("LEFT: "+str(left_speed))
-        print("RIGHT: "+str(right_speed))
+            print("LEFT: "+str(left_speed))
+            print("RIGHT: "+str(right_speed))
 
-        BP.set_motor_power(BP.PORT_D, left_speed)
-        BP.set_motor_power(BP.PORT_A, right_speed)
+            BP.set_motor_power(BP.PORT_D, left_speed)
+            BP.set_motor_power(BP.PORT_A, right_speed)
 
-    BP.reset_all()
+    except:
+        print("Exception motion task")
+    finally:
+        if BP is not None:
+            BP.reset_all()
+        if conn is not None:
+            conn.close()
+        if sock is not None:
+            sock.close()
+
 
     # TODO complete
 

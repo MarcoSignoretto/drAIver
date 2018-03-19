@@ -1,0 +1,5 @@
+
+DRAIVER_HOST = "drAIver.local"
+
+IMAGES_PORT = 10000
+MOTION_PORT = 10001
