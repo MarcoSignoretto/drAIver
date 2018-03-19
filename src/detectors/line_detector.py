@@ -368,6 +368,14 @@ def detect(img, negate = False):
         cv2.circle(img, (int(np.round(left)), img.shape[0] - INTERSECTION_LINE), 5, (0, 0, 255), thickness=2)
         cv2.circle(img, (int(np.round(right)), img.shape[0] - INTERSECTION_LINE), 5, (0, 0, 255), thickness=2)
 
+        #  center
+        lines_range = right - left
+        mid = left + lines_range / 2
+        cv2.circle(img, (int(np.round(mid)), img.shape[0] - INTERSECTION_LINE), 7, (0, 255, 255), thickness=2)
+
+        #  car position
+        cv2.circle(img, (int(np.round(car_position)), img.shape[0] - INTERSECTION_LINE), 5, (14, 34, 255), thickness=5)
+
         cv2.imshow("Gray", gray)
         # cv2.imshow("Otzu", thr)
         cv2.imshow("Adapt mean", th2)

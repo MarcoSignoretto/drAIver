@@ -57,6 +57,8 @@ def image_task():
         motor_controller.get_queue().put((left, right, car_position))
 
 
+
+
         #  ==================== End eleboration ================================
 
         cv2.imshow('CLIENT_LEFT', decimg_left)
