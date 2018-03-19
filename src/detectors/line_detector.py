@@ -14,6 +14,99 @@ BASE_PATH = "/mnt/B01EEC811EEC41C8/"
 
 INTERSECTION_LINE = 70
 
+#  =========================== TESTS ==============================
+
+
+def rho_theta_test():
+    x1 = 100
+    y1 = 200
+
+    x2 = 100
+    y2 = 155
+
+    img = cv2.imread(BASE_PATH + "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000009.png")
+
+    img = cv2.resize(img, (WIDTH, HEIGHT))
+
+    # detect(img)
+
+    # ================= POINT ============================
+
+    cv2.line(img, (x1, y1), (x2, y2), (0, 255, 0), thickness=3, lineType=cv2.LINE_8)
+
+    # ============== RHO THETA ==========================
+
+    theta = compute_theta(x1, y1, x2, y2)
+    rho = compute_rho(x1, y1, x2, y2)
+
+    a = np.cos(theta)
+    b = np.sin(theta)
+    x0 = a * rho
+    y0 = b * rho
+    x1 = int(x0 + 1000 * (-b))
+    y1 = int(y0 + 1000 * (a))
+    x2 = int(x0 - 1000 * (-b))
+    y2 = int(y0 - 1000 * (a))
+
+    cv2.line(img, (x1, y1), (x2, y2), (0, 0, 255), thickness=2, lineType=cv2.LINE_8)
+
+    cv2.imshow("frame", img)
+
+
+def intersection_test():
+    #  =================== TEST ========================
+    q = 200
+    m = 1.5
+    # m = int(np.round(np.tan(theta)))
+    # m = int(np.round(np.tan(0.78)))
+
+    x1 = 0
+    y1 = 0 + q
+    #
+    x2 = 480
+    y2 = int(np.round(m * x2 + q))
+
+    cv2.line(img, (x1, y1), (x2, y2), (128, 255, 23), thickness=3, lineType=cv2.LINE_8)
+
+    #  =================== TEST POLAR PLOT ========================
+
+    theta = compute_theta(x1, y1, x2, y2)
+    rho = compute_rho(x1, y1, x2, y2)
+    print("theta:" + str(theta))
+    print("rho:" + str(rho))
+
+    a = np.cos(theta)
+    b = np.sin(theta)
+    x0 = a * rho
+    y0 = b * rho
+
+    pt1 = (int(round(x0 + 1000 * (-b))), int(round(y0 + 1000 * (a))))
+    # pt1 = (int(round(y0 + 1000 * (a))), int(round(x0 + 1000 * (-b))))
+    pt2 = (int(round(x0 - 1000 * (-b))), int(round(y0 - 1000 * (a))))
+    # pt2 = (int(round(y0 - 1000 * (a))), int(round(x0 - 1000 * (-b))))
+
+    cv2.line(img, pt1, pt2, (128, 55, 23), thickness=1, lineType=cv2.LINE_8)
+
+    #  =================== TEST POLAR ========================
+
+    K = img.shape[0] - INTERSECTION_LINE
+
+    q = compute_q(rho, theta)
+    # q = rho * np.sqrt(1+np.power(np.tan(theta), 2))
+    x_new = (K - q) / compute_m_from_polar(theta)
+
+    # q_new = K - np.sin(theta) * rho
+    # x_new = (K-q_new)/m
+
+    print("x_new:" + str(x_new) + " q_new: " + str(q))
+
+    cv2.circle(img, (int(np.round(rho * np.cos(theta))), int(np.round(rho * np.sin(theta)))), 5, (255, 34, 100),
+               thickness=1)
+
+    cv2.circle(img, (int(np.round(x_new)), K), 5, (134, 234, 100), thickness=2)
+
+    cv2.imshow("Img", img)
+
 
 def compute_theta(x1, y1, x2, y2):
     if x1-x2 == 0:
@@ -35,6 +128,22 @@ def compute_rho(x1, y1, x2, y2):
         q = y1-m*x1
 
         return abs(q)/np.sqrt(1.0+math.pow(m, 2))
+
+
+def compute_m_from_polar(theta):
+    if np.sin(theta) != 0:
+        return -np.cos(theta) / np.sin(theta)
+    else:
+        return math.nan
+
+
+def compute_q(rho, theta):
+    if np.sin(theta) != 0:
+        m = -np.cos(theta) / np.sin(theta)
+        q = rho * np.sqrt(1 + np.power(m, 2))
+        return q
+    else:
+        return math.nan
 
 
 def cluster_lines(line_points):
@@ -140,9 +249,9 @@ def find_intersections(lines, reference):
     for line in lines:
         theta = line[1]
         rho = line[0]
-        if np.cos(theta) != 0:
-            m = np.tan(theta)
-            q = reference - np.sin(theta) * rho
+        if np.sin(theta) != 0:
+            m = compute_m_from_polar(theta)
+            q = compute_q(rho, theta)
             x = (reference - q) / m
         else:
             x = rho #TODO test
@@ -245,10 +354,11 @@ def detect(img, negate = False):
         if intersection >= 0 and intersection <= img.shape[1]:
             cv2.circle(img, (int(np.round(intersection)), img.shape[0]-INTERSECTION_LINE), 5, (134, 234, 100), thickness=2)
 
-    cv2.imshow("Img", img)
+
     cv2.imshow("Gray", gray)
     #cv2.imshow("Otzu", thr)
     cv2.imshow("Adapt mean", th2)
+    cv2.imshow("Img", img)
     #cv2.imshow("Adapt gaussian", th3)
     #cv2.imshow("Canny", edges)
     #cv2.imshow("CannyDilated", dilate)
@@ -265,10 +375,10 @@ if __name__ == '__main__':
     # gaussian a difficoltà sul molto scuro
 
     #img = cv2.imread(BASE_PATH + "Datasets/drAIver/line_detection/street.jpg")
-    #img = cv2.imread(BASE_PATH + "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000009.png")
+    img = cv2.imread(BASE_PATH + "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000009.png")
     #img = cv2.imread(BASE_PATH + "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000014.png")
     #img = cv2.imread(BASE_PATH + "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000024.png")  # bad ( bad with -40)  <= very big problem
-    img = cv2.imread(BASE_PATH + "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000044.png") # problem to find correct two lines
+    #img = cv2.imread(BASE_PATH + "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000044.png") # problem to find correct two lines
     #img = cv2.imread(BASE_PATH + "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000047.png") # more or less ( otzu very good here )
     #img = cv2.imread(BASE_PATH + "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000071.png")  # more or less ( otzu very bad here )
     #img = cv2.imread(BASE_PATH + "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000123.png")
@@ -281,6 +391,8 @@ if __name__ == '__main__':
     # TODO fix linee tratteggiate
 
     detect(img)
+
+
 
     cv2.waitKey(0)
     cv2.destroyAllWindows()
