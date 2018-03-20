@@ -6,7 +6,9 @@ from draiver.communication.motorprotocol import MotorProtocol
 import socket
 
 BASE_SPEED = 20
-STEERING_SCALE = 10
+STEERING_SCALE = 30
+MAX_STEERING = 30
+
 
 
 class MotorController(Thread):
@@ -39,8 +41,18 @@ class MotorController(Thread):
         left_speed = BASE_SPEED
         right_speed = BASE_SPEED
 
-        car_offset = abs(car_position - mid)
-        delta = (STEERING_SCALE * car_offset) / (range/2)
+        car_offset = min(abs(car_position - mid), STEERING_SCALE)
+        delta = (STEERING_SCALE * car_offset) / (range/2.0)
+
+
+        # exp_delta = (delta ** 2)/((STEERING_SCALE**2)/(MAX_STEERING))
+        # if delta >= 0:
+        #     delta = exp_delta
+        # else:
+        #     delta = -exp_delta
+
+        left_speed = BASE_SPEED - (delta / 2.0)
+        right_speed = BASE_SPEED - (delta / 2.0)
 
         if car_position > mid: #  go to left
             right_speed = right_speed + delta

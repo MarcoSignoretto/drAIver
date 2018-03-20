@@ -13,7 +13,7 @@ WIDTH = 640
 
 BASE_PATH = "/mnt/B01EEC811EEC41C8/"
 
-INTERSECTION_LINE = 70
+INTERSECTION_LINE = 150
 
 DEBUG = True
 PLOT = False
@@ -286,11 +286,11 @@ def detect(img, negate = False):
 
         cv2.line(img, (x1, y1), (x2, y2), (255, 0, 0), thickness=2, lineType=cv2.LINE_8)
 
-        if theta < 0.78 or theta > 2.35: #TODO fix theta
-            if DEBUG:
-                cv2.line(img, (x1, y1), (x2, y2), (0, 255, 0), thickness=1, lineType=cv2.LINE_8)
+        #if theta < 0.78 or theta > 2.35: #TODO fix theta
+        if DEBUG:
+            cv2.line(img, (x1, y1), (x2, y2), (0, 255, 0), thickness=1, lineType=cv2.LINE_8)
 
-            filtered_lines.append((rho, theta))
+        filtered_lines.append((rho, theta))
 
     print("============ Filtered lines =============")
 
@@ -378,8 +378,8 @@ def detect(img, negate = False):
 
         cv2.imshow("Gray", gray)
         # cv2.imshow("Otzu", thr)
-        cv2.imshow("Adapt mean", th2)
-        cv2.imshow("Img", img)
+        #cv2.imshow("Adapt mean", th2)
+        #cv2.imshow("Img", img)
         # cv2.imshow("Adapt gaussian", th3)
         # cv2.imshow("Canny", edges)
         # cv2.imshow("CannyDilated", dilate)

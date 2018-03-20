@@ -33,11 +33,11 @@ def recvall(sock, count):
 def image_task():
     sock = None
     conn = None
+    vc = cv2.VideoCapture()
     try:
         print("Image Thread Started")
 
         # camera init
-        vc = cv2.VideoCapture()
         vc.open(0)
         time.sleep(1)  # without this camera setup failed
         print(vc.set(cv2.CAP_PROP_FRAME_WIDTH, FRAME_WIDTH))
@@ -82,6 +82,8 @@ def image_task():
             conn.close()
         if sock is not None:
             sock.close()
+        if vc.isOpened():
+            vc.release()
 
 
 def motion_task():
