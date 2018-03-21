@@ -24,7 +24,6 @@ class MotorController(Thread):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.connect(server_address)
 
-
     def get_queue(self):
         return self.queue
 
