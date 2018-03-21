@@ -46,11 +46,11 @@ sudo ln -s ~/anaconda3/envs/ envs
 
 ### Link drAIver scripts as library ###
 
-In order to use drAIver scripts as library you need to import it into the ```site-packages``` folder, to do that execute the following lines of code
+In order to use drAIver/driver scripts as library you need to import it into the ```site-packages``` folder, to do that execute the following lines of code
 
 ```bash
 cd /envs/drAIver/lib/python3.5/site-packages/
-sudo ln -s <drAIver_folder>/src/ draiver
+sudo ln -s <drAIver_folder>/draiver/ draiver
 ```
 
 

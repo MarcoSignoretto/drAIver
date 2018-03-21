@@ -82,7 +82,7 @@ In order to use drAIver scripts as library you need to import it into the ```sit
 
 ```bash
 cd /envs/drAIver/lib/python3.4/site-packages/
-sudo ln -s <drAIver_folder>/src/ draiver
+sudo ln -s <drAIver_folder>/draiver/ draiver
 ```
 
 ## Install OpenCv3 with Python3 ##

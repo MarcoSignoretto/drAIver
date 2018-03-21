@@ -6,4 +6,5 @@ opencv_contrib-*.zip
 StereoVision/
 __pycache__/*
 .vscode/
+config/
 
