@@ -103,30 +103,35 @@ class BirdsEye:
     def __init__(self, perspective_file_path=cp.DEFAULT_BIRDSEYE_CONFIG_PATH, width=cp.FRAME_WIDTH, height=cp.FRAME_HEIGHT):
         self.width = width
         self.height = height
-        # Init space for perspective detection
-        self.points = np.empty([4, 2], dtype=np.float32)
-        # Fixed coordinate for road view
-        self.destination_points = np.float32([
-            [
-                width / cp.CHESSBOARD_ROW_CORNERS,
-                height / cp.CHESSBOARD_COL_CORNERS
-            ], [
-                width - (width / cp.CHESSBOARD_ROW_CORNERS),
-                height / cp.CHESSBOARD_COL_CORNERS
-            ], [
-                width / cp.CHESSBOARD_ROW_CORNERS,
-                height - (height / cp.CHESSBOARD_COL_CORNERS)
-            ], [
-                width - (width / cp.CHESSBOARD_ROW_CORNERS),
-                height - (height / cp.CHESSBOARD_COL_CORNERS)
-            ]
-        ])
+        # # Init space for perspective detection
+        # self.points = np.empty([4, 2], dtype=np.float32)
+        # # Fixed coordinate for road view
+        # self.destination_points = np.float32([
+        #     [
+        #         width / cp.CHESSBOARD_ROW_CORNERS,
+        #         height / cp.CHESSBOARD_COL_CORNERS
+        #     ], [
+        #         width - (width / cp.CHESSBOARD_ROW_CORNERS),
+        #         height / cp.CHESSBOARD_COL_CORNERS
+        #     ], [
+        #         width / cp.CHESSBOARD_ROW_CORNERS,
+        #         height - (height / cp.CHESSBOARD_COL_CORNERS)
+        #     ], [
+        #         width - (width / cp.CHESSBOARD_ROW_CORNERS),
+        #         height - (height / cp.CHESSBOARD_COL_CORNERS)
+        #     ]
+        # ])
 
         if os.path.isfile(perspective_file_path):
             # camera perspective transformation
             self.M = np.load(perspective_file_path)
         else:
             print("WARNING!!!! => Perspective camera information not ready.")
+
+    def __init__(self, M, width=cp.FRAME_WIDTH, height=cp.FRAME_HEIGHT):
+        self.width = width
+        self.height = height
+        self.M = M
 
     def apply(self, img):
         return cv2.warpPerspective(img, self.M, (self.width, self.height))

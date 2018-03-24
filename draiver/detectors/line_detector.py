@@ -7,6 +7,8 @@ from sklearn.cluster import DBSCAN
 from sklearn import metrics
 from sklearn.preprocessing import StandardScaler
 from draiver.motion.motorcontroller import MotorController
+import draiver.camera.properties as cp
+from draiver.camera.birdseye import BirdsEye
 
 HEIGHT = 480
 WIDTH = 640
@@ -271,156 +273,219 @@ def detect(img, negate = False):
 
     lines = cv2.HoughLines(th2, 1, np.pi/180, 200)
     filtered_lines = []
-    for item in lines:
+    if lines is not None:
+        for item in lines:
 
-        rho, theta = item[0]
+            rho, theta = item[0]
 
-        a = np.cos(theta)
-        b = np.sin(theta)
-        x0 = a * rho
-        y0 = b * rho
-        x1 = int(x0 + 1000 * (-b))
-        y1 = int(y0 + 1000 * (a))
-        x2 = int(x0 - 1000 * (-b))
-        y2 = int(y0 - 1000 * (a))
+            a = np.cos(theta)
+            b = np.sin(theta)
+            x0 = a * rho
+            y0 = b * rho
+            x1 = int(x0 + 1000 * (-b))
+            y1 = int(y0 + 1000 * (a))
+            x2 = int(x0 - 1000 * (-b))
+            y2 = int(y0 - 1000 * (a))
 
-        cv2.line(img, (x1, y1), (x2, y2), (255, 0, 0), thickness=2, lineType=cv2.LINE_8)
+            cv2.line(img, (x1, y1), (x2, y2), (255, 0, 0), thickness=2, lineType=cv2.LINE_8)
 
-        #if theta < 0.78 or theta > 2.35: #TODO fix theta
-        if DEBUG:
-            cv2.line(img, (x1, y1), (x2, y2), (0, 255, 0), thickness=1, lineType=cv2.LINE_8)
-
-        filtered_lines.append((rho, theta))
-
-    print("============ Filtered lines =============")
-
-    rhos = []
-    thetas = []
-    for rho, theta in filtered_lines:
-        thetas.append(theta)
-        rhos.append(rho)
-
-    if PLOT:
-        plt.scatter(rhos, thetas)
-        plt.show()
-
-    line_points = [list(t) for t in zip(rhos, thetas)]
-
-    # ===== CLUSTERING ============
-
-    cluster_result = cluster_lines(line_points)
-
-    labels = cluster_result.labels_
-    n_clusters = len(set(labels)) - (1 if -1 in labels else 0)
-    cluster_items = {}
-    for i in range(0, n_clusters):
-        cluster_items[i] = []
-
-    for i in range(0, len(labels)):
-        cluster = labels[i]
-        if cluster != -1:
-            cluster_items[cluster].append(np.asarray(line_points[i]))
-
-    centroids = []
-    for key, value in cluster_items.items():
-        centroids.append(np.asarray(value).mean(axis=0))
-
-    for center in centroids:
-        a = math.cos(center[1])
-        b = math.sin(center[1])
-
-        x0 = a * center[0]
-        y0 = b * center[0]
-
-        pt1 = (int(round(x0 + 1000 * (-b))), int(round(y0 + 1000 * (a))))
-        # pt1 = (int(round(y0 + 1000 * (a))), int(round(x0 + 1000 * (-b))))
-        pt2 = (int(round(x0 - 1000 * (-b))), int(round(y0 - 1000 * (a))))
-        # pt2 = (int(round(y0 - 1000 * (a))), int(round(x0 - 1000 * (-b))))
-
-        if DEBUG:
-            cv2.line(img, pt1, pt2, (0, 0, 0), thickness=3, lineType=cv2.LINE_8)
-
-    if PLOT:
-        plt.show()
-
-    pt1 = (0, img.shape[0]-INTERSECTION_LINE)
-    pt2 = (img.shape[1], img.shape[0]-INTERSECTION_LINE)
-
-    if DEBUG:
-        cv2.line(img, pt1, pt2, (34, 112, 200), thickness=4, lineType=cv2.LINE_8)
-
-    #==================== CALCULATE INTERSECTIONS ==========================
-
-    intersections = find_intersections(centroids, img.shape[0]-INTERSECTION_LINE)
-
-    for intersection in intersections:
-        if intersection >= 0 and intersection <= img.shape[1]:
+            #if theta < 0.78 or theta > 2.35: #TODO fix theta
             if DEBUG:
-                cv2.circle(img, (int(np.round(intersection)), img.shape[0]-INTERSECTION_LINE), 5, (134, 234, 100), thickness=2)
+                cv2.line(img, (x1, y1), (x2, y2), (0, 255, 0), thickness=1, lineType=cv2.LINE_8)
 
-    #==================== FIND 2 ROAD LINES ========================
+            filtered_lines.append((rho, theta))
 
-    car_position = img.shape[1] / 2
+        print("============ Filtered lines =============")
 
-    left, right = filter_road_lines(car_position, intersections, img.shape[1])
+        rhos = []
+        thetas = []
+        for rho, theta in filtered_lines:
+            thetas.append(theta)
+            rhos.append(rho)
 
-    if DEBUG:
-        cv2.circle(img, (int(np.round(left)), img.shape[0] - INTERSECTION_LINE), 5, (0, 0, 255), thickness=2)
-        cv2.circle(img, (int(np.round(right)), img.shape[0] - INTERSECTION_LINE), 5, (0, 0, 255), thickness=2)
+        if PLOT:
+            plt.scatter(rhos, thetas)
+            plt.show()
 
-        #  center
-        lines_range = right - left
-        mid = left + lines_range / 2
-        cv2.circle(img, (int(np.round(mid)), img.shape[0] - INTERSECTION_LINE), 7, (0, 255, 255), thickness=2)
+        line_points = [list(t) for t in zip(rhos, thetas)]
 
-        #  car position
-        cv2.circle(img, (int(np.round(car_position)), img.shape[0] - INTERSECTION_LINE), 5, (14, 34, 255), thickness=5)
+        # ===== CLUSTERING ============
 
-        cv2.imshow("Gray", gray)
-        # cv2.imshow("Otzu", thr)
-        #cv2.imshow("Adapt mean", th2)
-        #cv2.imshow("Img", img)
-        # cv2.imshow("Adapt gaussian", th3)
-        # cv2.imshow("Canny", edges)
-        # cv2.imshow("CannyDilated", dilate)
-        # cv2.imshow("Adapt mean erosion", th2erosion)
-        # cv2.imshow("Adapt gaussian erosion", th3erosion)
-        # cv2.imshow("erosion", erosion)
+        cluster_result = cluster_lines(line_points)
 
-        cv2.waitKey(1)
+        labels = cluster_result.labels_
+        n_clusters = len(set(labels)) - (1 if -1 in labels else 0)
+        cluster_items = {}
+        for i in range(0, n_clusters):
+            cluster_items[i] = []
 
-    return left, right, car_position
+        for i in range(0, len(labels)):
+            cluster = labels[i]
+            if cluster != -1:
+                cluster_items[cluster].append(np.asarray(line_points[i]))
+
+        centroids = []
+        for key, value in cluster_items.items():
+            centroids.append(np.asarray(value).mean(axis=0))
+
+        for center in centroids:
+            a = math.cos(center[1])
+            b = math.sin(center[1])
+
+            x0 = a * center[0]
+            y0 = b * center[0]
+
+            pt1 = (int(round(x0 + 1000 * (-b))), int(round(y0 + 1000 * (a))))
+            # pt1 = (int(round(y0 + 1000 * (a))), int(round(x0 + 1000 * (-b))))
+            pt2 = (int(round(x0 - 1000 * (-b))), int(round(y0 - 1000 * (a))))
+            # pt2 = (int(round(y0 - 1000 * (a))), int(round(x0 - 1000 * (-b))))
+
+            if DEBUG:
+                cv2.line(img, pt1, pt2, (0, 0, 0), thickness=3, lineType=cv2.LINE_8)
+
+        if PLOT:
+            plt.show()
+
+        pt1 = (0, img.shape[0]-INTERSECTION_LINE)
+        pt2 = (img.shape[1], img.shape[0]-INTERSECTION_LINE)
+
+        if DEBUG:
+            cv2.line(img, pt1, pt2, (34, 112, 200), thickness=4, lineType=cv2.LINE_8)
+
+        #==================== CALCULATE INTERSECTIONS ==========================
+
+        intersections = find_intersections(centroids, img.shape[0]-INTERSECTION_LINE)
+
+        for intersection in intersections:
+            if intersection >= 0 and intersection <= img.shape[1]:
+                if DEBUG:
+                    cv2.circle(img, (int(np.round(intersection)), img.shape[0]-INTERSECTION_LINE), 5, (134, 234, 100), thickness=2)
+
+        #==================== FIND 2 ROAD LINES ========================
+
+        car_position = img.shape[1] / 2
+
+        left, right = filter_road_lines(car_position, intersections, img.shape[1])
+
+        if DEBUG:
+            cv2.circle(img, (int(np.round(left)), img.shape[0] - INTERSECTION_LINE), 5, (0, 0, 255), thickness=2)
+            cv2.circle(img, (int(np.round(right)), img.shape[0] - INTERSECTION_LINE), 5, (0, 0, 255), thickness=2)
+
+            #  center
+            lines_range = right - left
+            mid = left + lines_range / 2
+            cv2.circle(img, (int(np.round(mid)), img.shape[0] - INTERSECTION_LINE), 7, (0, 255, 255), thickness=2)
+
+            #  car position
+            cv2.circle(img, (int(np.round(car_position)), img.shape[0] - INTERSECTION_LINE), 5, (14, 34, 255), thickness=5)
+
+            cv2.imshow("Gray", gray)
+            # cv2.imshow("Otzu", thr)
+            cv2.imshow("Adapt mean", th2)
+            cv2.moveWindow("Adapt mean", 100, 800)
+            #cv2.imshow("Img", img)
+            # cv2.imshow("Adapt gaussian", th3)
+            # cv2.imshow("Canny", edges)
+            # cv2.imshow("CannyDilated", dilate)
+            # cv2.imshow("Adapt mean erosion", th2erosion)
+            # cv2.imshow("Adapt gaussian erosion", th3erosion)
+            # cv2.imshow("erosion", erosion)
+
+            cv2.waitKey(1)
+
+        return left, right, car_position
+    else:
+        return None, None, None
 
 
 if __name__ == '__main__':
     # Adaptive gaussian or mean ( gaussian is a bit better )
     # gaussian a difficoltà sul molto scuro
 
-    #img = cv2.imread(BASE_PATH + "Datasets/drAIver/line_detection/street.jpg")
-    #img = cv2.imread(BASE_PATH + "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000009.png")
-    #img = cv2.imread(BASE_PATH + "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000014.png")
-    #img = cv2.imread(BASE_PATH + "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000024.png")  # bad ( bad with -40)  <= very big problem
-    #img = cv2.imread(BASE_PATH + "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000044.png") # problem to find correct two lines
-    #img = cv2.imread(BASE_PATH + "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000047.png") # more or less ( otzu very good here )
-    #img = cv2.imread(BASE_PATH + "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000071.png")  # more or less ( otzu very bad here )
-    #img = cv2.imread(BASE_PATH + "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000123.png")
-    # linee trateggiate
-    #img = cv2.imread(BASE_PATH + "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000081.png")
-    img = cv2.imread(BASE_PATH + "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000087.png")
+    images = [
+        "Datasets/drAIver/line_detection/street.jpg",
+        "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000009.png",
+        "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000014.png",
+        "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000024.png",
+        "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000044.png",
+        "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000047.png",
+        "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000071.png",
+        "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000123.png",
+        # linee trateggiate
+        "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000081.png",
+        "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000087.png"
+    ]
 
-    img = cv2.resize(img, (WIDTH, HEIGHT))
+    for path in images:
+        width = cp.FRAME_WIDTH
+        height = cp.FRAME_HEIGHT
 
-    # TODO cut image on half to have strongest line detection and avoid noise
+        points = np.float32([
+            [
+                261,
+                326
+            ], [
+                356,
+                326
+            ], [
+                173,
+                478
+            ], [
+                411,
+                478
+            ]
+        ])
+        # points = np.float32([
+        #     [
+        #         281,
+        #         266
+        #     ], [
+        #         326,
+        #         263
+        #     ], [
+        #         159,
+        #         479
+        #     ], [
+        #         420,
+        #         478
+        #     ]
+        # ])
+        # Fixed coordinate for road view
+        destination_points = np.float32([
+            [
+                width / cp.CHESSBOARD_ROW_CORNERS,
+                height / cp.CHESSBOARD_COL_CORNERS
+            ], [
+                width - (width / cp.CHESSBOARD_ROW_CORNERS),
+                height / cp.CHESSBOARD_COL_CORNERS
+            ], [
+                width / cp.CHESSBOARD_ROW_CORNERS,
+                height - (height / cp.CHESSBOARD_COL_CORNERS)
+            ], [
+                width - (width / cp.CHESSBOARD_ROW_CORNERS),
+                height - (height / cp.CHESSBOARD_COL_CORNERS)
+            ]
+        ])
 
-    # TODO fix linee tratteggiate
+        M = cv2.getPerspectiveTransform(points, destination_points)
 
-    left, right, car_position = detect(img)
+        birdeye = BirdsEye(M, width, height)
 
-    motor_controller = MotorController()
-    motor_controller.start()
-    motor_controller.get_queue().put((left, right, car_position))
+        img = cv2.imread(BASE_PATH + path)
+        img = cv2.resize(img, (WIDTH, HEIGHT))
+        img = birdeye.apply(img)
 
-    cv2.imshow("Frame", img)
+        # TODO cut image on half to have strongest line detection and avoid noise
 
-    cv2.waitKey(0)
+        # TODO fix linee tratteggiate
+
+        left, right, car_position = detect(img)
+
+        # motor_controller = MotorController()
+        # motor_controller.start()
+        # motor_controller.get_queue().put((left, right, car_position))
+
+        cv2.imshow("Frame", img)
+
+        cv2.waitKey(0)
     cv2.destroyAllWindows()

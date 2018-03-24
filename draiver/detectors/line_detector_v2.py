@@ -7,6 +7,8 @@ from sklearn.cluster import DBSCAN
 from sklearn import metrics
 from sklearn.preprocessing import StandardScaler
 from draiver.motion.motorcontroller import MotorController
+from draiver.camera.birdseye import BirdsEye
+import draiver.camera.properties as cp
 
 HEIGHT = 480
 WIDTH = 640
@@ -267,7 +269,11 @@ def detect(img, negate = False):
     if negate:
         gray = abs(255 - gray)
 
-    th2 = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 31, -35)  # maybe use a bit little biass
+    # V2 implementation use equalization of histogram
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+    gray = clahe.apply(gray)
+
+    th2 = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 41, -35)  # maybe use a bit little biass
 
     lines = cv2.HoughLines(th2, 1, np.pi/180, 200)
     filtered_lines = []
@@ -286,11 +292,11 @@ def detect(img, negate = False):
 
         cv2.line(img, (x1, y1), (x2, y2), (255, 0, 0), thickness=2, lineType=cv2.LINE_8)
 
-        #if theta < 0.78 or theta > 2.35: #TODO fix theta
-        if DEBUG:
-            cv2.line(img, (x1, y1), (x2, y2), (0, 255, 0), thickness=1, lineType=cv2.LINE_8)
+        if theta < 0.78 or theta > 2.35: #TODO fix theta
+            if DEBUG:
+                cv2.line(img, (x1, y1), (x2, y2), (0, 255, 0), thickness=1, lineType=cv2.LINE_8)
 
-        filtered_lines.append((rho, theta))
+            filtered_lines.append((rho, theta))
 
     print("============ Filtered lines =============")
 
@@ -378,6 +384,7 @@ def detect(img, negate = False):
 
         #cv2.imshow("Gray", gray)
         # cv2.imshow("Otzu", thr)
+
         cv2.imshow("Adapt mean", th2)
         cv2.moveWindow("Adapt mean", 1500, 100)
         #cv2.imshow("Img", img)
@@ -391,6 +398,73 @@ def detect(img, negate = False):
         cv2.waitKey(1)
 
     return left, right, car_position
+
+# Morphology filter
+def morphology_filter(img_):
+    """
+
+    :param img_: Input Image
+    :return: Morphologically Filtered Image
+    """
+    gray = np.zeros((HEIGHT, WIDTH, 1), dtype=np.uint8)
+    gray = cv2.cvtColor(img_, cv2.COLOR_RGB2GRAY)
+    hls_s = cv2.cvtColor(img_, cv2.COLOR_RGB2HLS)[:, :, 2]
+    src = 0.6*hls_s + 0.4*gray
+    src = np.array(src-np.min(src)/(np.max(src)-np.min(src))).astype('float32')-0.5
+    blurf = np.zeros((1, 5))
+    blurf.fill(1)
+    src = cv2.filter2D(src, cv2.CV_32F, blurf)
+    f = np.zeros((1, 30))
+    f.fill(1)
+    l = cv2.morphologyEx(src, cv2.MORPH_OPEN, f)
+    filtered = src - l
+    return filtered
+
+
+# Image Threshold
+def img_threshold(img_):
+    """
+
+    :param img_: Input Image
+    :return: Thresholded Image
+    """
+
+    # Use HLS, LAB Channels for Thresholding #
+    img_hls = cv2.cvtColor(img_, cv2.COLOR_RGB2HLS)
+    img_hls = cv2.medianBlur(img_hls, 5)
+    b_channel = cv2.cvtColor(img_, cv2.COLOR_RGB2LAB)[:, :, 2]
+    b_channel = cv2.medianBlur(b_channel, 5)
+
+    # Filter out Greenery & Soil from environment
+    environment = np.logical_not(
+        (b_channel > 145) & (b_channel < 200) & cv2.inRange(img_hls, (0, 0, 50), (35, 192, 255))).astype(np.uint8) & (
+                              img_hls[:, :, 1] < 245)
+
+    # Deal with shadows and bright spots on the road #
+    # The shapes can be elliptical or rectangular #
+    big_kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (31, 31))
+    small_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (7, 7))
+    environment = cv2.morphologyEx(environment, cv2.MORPH_OPEN, small_kernel)
+    environment_mask = cv2.dilate(environment, big_kernel)
+
+    # Use Lane from Last mask to filter ROI
+    img_mask = environment_mask  #cv2.bitwise_and(last_mask, environment_mask)
+
+    # Morphology Channel Thresholding
+    morph_channel = morphology_filter(img_)
+    morph_thresh_lower = 1.2 * np.mean(morph_channel) + 1.3 * np.std(morph_channel)
+    morph_thresh_upper = np.max(morph_channel)
+    morph_binary = np.zeros_like(morph_channel)
+    morph_binary[(morph_channel >= morph_thresh_lower) &
+                 (morph_channel <= morph_thresh_upper)] = 1
+
+    # Erosion Kernel to clear out small granular noises
+    erosion_kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+    morph_binary = cv2.morphologyEx(morph_binary.astype(np.uint8), cv2.MORPH_ERODE, erosion_kernel)
+    morph_binary = cv2.morphologyEx(morph_binary, cv2.MORPH_OPEN, small_kernel)
+    combined_binary = cv2.bitwise_and(morph_binary.astype(np.uint8), img_mask.astype(np.uint8))
+
+    return combined_binary.astype(np.uint8)
 
 
 if __name__ == '__main__':
@@ -412,22 +486,71 @@ if __name__ == '__main__':
     ]
 
     for path in images:
+
+        width = cp.FRAME_WIDTH
+        height = cp.FRAME_HEIGHT
+
+        points = np.float32([
+            [
+                261,
+                326
+            ], [
+                356,
+                326
+            ], [
+                173,
+                478
+            ], [
+                411,
+                478
+            ]
+        ])
+        # points = np.float32([
+        #     [
+        #         281,
+        #         266
+        #     ], [
+        #         326,
+        #         263
+        #     ], [
+        #         159,
+        #         479
+        #     ], [
+        #         420,
+        #         478
+        #     ]
+        # ])
+        # Fixed coordinate for road view
+        destination_points = np.float32([
+            [
+                width / cp.CHESSBOARD_ROW_CORNERS,
+                height / cp.CHESSBOARD_COL_CORNERS
+            ], [
+                width - (width / cp.CHESSBOARD_ROW_CORNERS),
+                height / cp.CHESSBOARD_COL_CORNERS
+            ], [
+                width / cp.CHESSBOARD_ROW_CORNERS,
+                height - (height / cp.CHESSBOARD_COL_CORNERS)
+            ], [
+                width - (width / cp.CHESSBOARD_ROW_CORNERS),
+                height - (height / cp.CHESSBOARD_COL_CORNERS)
+            ]
+        ])
+
+        M = cv2.getPerspectiveTransform(points, destination_points)
+
+        birdeye = BirdsEye(M, width, height)
+
         img = cv2.imread(BASE_PATH + path)
-
-
-        #img = cv2.imread(BASE_PATH + "Datasets/drAIver/line_detection/street.jpg")
-        #img = cv2.imread(BASE_PATH + "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000009.png")
-        #img = cv2.imread(BASE_PATH + "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000014.png")
-        #img = cv2.imread(BASE_PATH + "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000024.png")  # bad ( bad with -40)  <= very big problem
-        #img = cv2.imread(BASE_PATH + "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000044.png") # problem to find correct two lines
-        #img = cv2.imread(BASE_PATH + "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000047.png") # more or less ( otzu very good here )
-        #img = cv2.imread(BASE_PATH + "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000071.png")  # more or less ( otzu very bad here )
-        #img = cv2.imread(BASE_PATH + "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000123.png")
-        # linee trateggiate
-        #img = cv2.imread(BASE_PATH + "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000081.png")
-        #img = cv2.imread(BASE_PATH + "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000087.png")
-
         img = cv2.resize(img, (WIDTH, HEIGHT))
+        #img = cv2.GaussianBlur(img, (5, 5), 0)
+        img = cv2.medianBlur(img, 3)  # remove noise from HS channels TODO choose
+
+        # Work only on bird view
+        cv2.imshow("Frame", img)
+        img = birdeye.apply(img)
+
+
 
         imgLAB = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
         imgHSV = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
@@ -447,15 +570,13 @@ if __name__ == '__main__':
         H, S, V = cv2.split(imgHSV)
         h, l, s = cv2.split(imgHLS)
 
-        # create a CLAHE object (Arguments are optional).
-
-        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-        S = clahe.apply(S)
 
 
 
 
         #=========================
+
+
 
 
 
@@ -469,21 +590,25 @@ if __name__ == '__main__':
         maskBGR = cv2.inRange(img, minBGR, maxBGR)
         resultBGR = cv2.bitwise_and(img, img, mask=maskBGR)
 
+        # ======================================= HSV ==================================
         # convert 1D array to 3D, then convert it to HSV and take the first element
         # this will be same as shown in the above figure [65, 229, 158]
-        #hsv = cv2.cvtColor(np.uint8([[bgr]]), cv2.COLOR_BGR2HSV)[0][0]
+        hsv = cv2.cvtColor(np.uint8([[bgr]]), cv2.COLOR_BGR2HSV)[0][0]
         hsvMIN = [0, 0, 200]
         hsvMAX = [50, 20, 255]
 
-        minHSV = np.array([hsvMIN[0], hsvMIN[1], hsvMIN[2]])
-        maxHSV = np.array([hsvMAX[0], hsvMAX[1], hsvMAX[2]])
 
-        #minHSV = np.array([hsv[0] - thresh, hsv[1] - thresh, hsv[2] - thresh])
-        #maxHSV = np.array([hsv[0] + thresh, hsv[1] + thresh, hsv[2] + thresh])
+        #minHSV = np.array([hsvMIN[0], hsvMIN[1], hsvMIN[2]])
+        #maxHSV = np.array([hsvMAX[0], hsvMAX[1], hsvMAX[2]])
+
+        minHSV = np.array([hsv[0] - thresh, hsv[1] - thresh, hsv[2] - thresh])
+        maxHSV = np.array([hsv[0] + thresh, hsv[1] + thresh, hsv[2] + thresh])
 
         maskHSV = cv2.inRange(imgHSV, minHSV, maxHSV)
         resultHSV = cv2.bitwise_and(imgHSV, imgHSV, mask=maskHSV)
+        resultHSV = cv2.cvtColor(resultHSV, cv2.COLOR_HSV2BGR)
 
+        # ======================================= LAB ==================================
         # convert 1D array to 3D, then convert it to LAB and take the first element
         lab = cv2.cvtColor(np.uint8([[bgr]]), cv2.COLOR_BGR2LAB)[0][0]
 
@@ -492,56 +617,114 @@ if __name__ == '__main__':
 
         maskLAB = cv2.inRange(imgLAB, minLAB, maxLAB)
         resultLAB = cv2.bitwise_and(imgLAB, imgLAB, mask=maskLAB)
+        resultLAB = cv2.cvtColor(resultLAB, cv2.COLOR_LAB2BGR)
 
-        #====
+        # ======================================= HLS ==================================
+
+        # AUTO
         hls = cv2.cvtColor(np.uint8([[bgr]]), cv2.COLOR_BGR2HLS)[0][0]
-        hlsMIN = [0, 0, 200]
-        hlsMAX = [50, 20, 255]
 
         minHLS = np.array([hls[0] - thresh, hls[1] - thresh, hls[2] - thresh])
         maxHLS = np.array([hls[0] + thresh, hls[1] + thresh, hls[2] + thresh])
-
         maskHLS = cv2.inRange(imgHLS, minHLS, maxHLS)
+
         resultHLS = cv2.bitwise_and(imgHLS, imgHLS, mask=maskHLS)
+        resultHLS = cv2.cvtColor(resultHLS, cv2.COLOR_HLS2BGR)
 
-        # cv2.imshow("Result BGR", resultBGR)
-        # cv2.moveWindow("Result BGR", 100, 100)
-        # cv2.imshow("Output LAB", resultLAB)
-        # cv2.moveWindow("Output LAB", 800, 700)
-
-
-
-
+        # #with different setting
+        #
+        # #hls = cv2.cvtColor(np.uint8([[bgr]]), cv2.COLOR_BGR2HLS)[0][0]
+        # h, l, s = cv2.split(imgHLS)
+        # hlsMIN = [0, 0, 0]
+        # hlsMAX = [110, 255, 45]
+        #
+        # # use full range for l because then thresholded
+        # l = cv2.adaptiveThreshold(l, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 31,
+        #                           -10)  # maybe use a bit little biass
+        #
+        # clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+        # s = clahe.apply(s)
+        #
+        # # s = cv2.equalizeHist(s)
+        #
+        #
+        #
+        # # # ================ hist norm ====================
+        # # hist, bins = np.histogram(img.flatten(), 256, [0, 256])
+        # # cdf = hist.cumsum()
+        # # cdf_normalized = cdf * hist.max() / cdf.max()
+        # # plt.plot(cdf_normalized, color='b')
+        # # plt.hist(img.flatten(), 256, [0, 256], color='r')
+        # # plt.xlim([0, 256])
+        # # plt.legend(('cdf', 'histogram'), loc='upper left')
+        # # plt.show()
+        #
+        #
+        # # minHLS = np.array([hls[0] - thresh, hls[1] - thresh, hls[2] - thresh])
+        # # maxHLS = np.array([hls[0] + thresh, hls[1] + thresh, hls[2] + thresh])
+        # minHLS = np.array([hlsMIN[0], hlsMIN[1], hlsMIN[2]])
+        # maxHLS = np.array([hlsMAX[0], hlsMAX[1], hlsMAX[2]])
+        #
+        #
+        # maskHLS = cv2.inRange(imgHLS, minHLS, maxHLS)
+        #
+        # resultHLS = cv2.bitwise_and(imgHLS, imgHLS, mask=maskHLS)
+        # #
+        # resultHLS = cv2.bitwise_and(resultHLS, resultHLS, mask=l)
+        #
+        # resultHLS = cv2.cvtColor(resultHLS, cv2.COLOR_HLS2BGR)
 
         #========================
         left, right, car_position = detect(img)
 
+        #l = cv2.adaptiveThreshold(l, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 31, -10)  # maybe use a bit little biass
 
-        cv2.imshow("Frame", img)
+
+
         # cv2.imshow("L", L)
         # cv2.imshow("A", A)
         # cv2.imshow("B", B)
 
-        cv2.imshow("H", H)
-        cv2.moveWindow("H", 100, 100)
-        cv2.imshow("S", S)
-        cv2.moveWindow("S", 800, 100)
-        cv2.imshow("V", V)
-        cv2.moveWindow("V", 1500, 100)
+        # cv2.imshow("H", H)
+        # cv2.moveWindow("H", 100, 100)
+        # cv2.imshow("S", S)
+        # cv2.moveWindow("S", 800, 100)
+        # cv2.imshow("V", V)
+        # cv2.moveWindow("V", 1500, 100)
+        #
+        # cv2.imshow("h", h)
+        # cv2.moveWindow("h", 100, 700)
+        # cv2.imshow("l", l)
+        # cv2.moveWindow("l", 800, 700)
+        # cv2.imshow("s", s)
+        # cv2.moveWindow("s", 1500, 700)
 
-        cv2.imshow("h", h)
-        cv2.moveWindow("h", 100, 700)
-        cv2.imshow("l", l)
-        cv2.moveWindow("l", 800, 700)
-        cv2.imshow("s", s)
-        cv2.moveWindow("s", 1500, 700)
-
+        # cv2.imshow("Result HSV", gray)
+        # cv2.moveWindow("Result HSV", 800, 100)
 
 
         # cv2.imshow("Result HSV", resultHSV)
-        # cv2.moveWindow("Result HSV", 800, 100)
+        # cv2.moveWindow("Result HSV", 1500, 100)
+        #
         # cv2.imshow("Result HLS", resultHLS)
-        # cv2.moveWindow("Result HLS", 100, 700)
+        # cv2.moveWindow("Result HLS", 100, 800)
+
+        # Work only on bird view
+        cv2.imshow("Frame d", img)
+        cv2.moveWindow("Frame d", 100, 100)
+
+        # cv2.imshow("My", th2)
+        # cv2.moveWindow("My", 800, 800)
+        #
+        # cv2.imshow("Gray", gray)
+        # cv2.moveWindow("Gray", 1500, 800)
+
+        # img = img_threshold(img)
+        #
+        # # MOrph
+        # cv2.imshow("Morph", img)
+        # cv2.moveWindow("Morph", 100, 700)
+
 
 
         cv2.waitKey(0)
