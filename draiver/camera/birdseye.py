@@ -7,7 +7,7 @@ import draiver.camera.properties as cp
 import os
 
 
-def detect_camera_perspective_and_save(camera_index, perspective_file_path=cp.DEFAULT_BIRDSEYE_CONFIG_PATH):
+def detect_camera_perspective_and_save(camera_index, perspective_file_path, external_camera):
     # Open Camera
     vc = cv2.VideoCapture()
     vc.open(camera_index)
@@ -38,22 +38,41 @@ def detect_camera_perspective_and_save(camera_index, perspective_file_path=cp.DE
                     # dst = cv2.cornerHarris(thr, 6, 11, 0.04)
 
                     points = np.empty([4, 2], dtype=np.float32)
-                    # Fixed coordinate for road view
-                    destination_points = np.float32([
-                        [
-                            width / cp.CHESSBOARD_ROW_CORNERS,
-                            height / cp.CHESSBOARD_COL_CORNERS
-                        ], [
-                            width - (width / cp.CHESSBOARD_ROW_CORNERS),
-                            height / cp.CHESSBOARD_COL_CORNERS
-                        ], [
-                            width / cp.CHESSBOARD_ROW_CORNERS,
-                            height - (height / cp.CHESSBOARD_COL_CORNERS)
-                        ], [
-                            width - (width / cp.CHESSBOARD_ROW_CORNERS),
-                            height - (height / cp.CHESSBOARD_COL_CORNERS)
-                        ]
-                    ])
+
+                    if external_camera:
+                        # Fixed coordinate for road view
+                        destination_points = np.float32([
+                            [
+                                width / cp.CHESSBOARD_ROW_CORNERS,
+                                height / cp.CHESSBOARD_COL_CORNERS
+                            ], [
+                                width - (width / cp.CHESSBOARD_ROW_CORNERS),
+                                height / cp.CHESSBOARD_COL_CORNERS
+                            ], [
+                                width / cp.CHESSBOARD_ROW_CORNERS,
+                                height - (height / cp.CHESSBOARD_COL_CORNERS)
+                            ], [
+                                width - (width / cp.CHESSBOARD_ROW_CORNERS),
+                                height - (height / cp.CHESSBOARD_COL_CORNERS)
+                            ]
+                        ])
+                    else:
+                        #  Robot destination points
+                        destination_points = np.float32([
+                            [
+                                width / 3,
+                                height / 2,
+                            ], [
+                                width - (width / 3),
+                                height / 2
+                            ], [
+                                width / 3,
+                                height# height - (height / 3)
+                            ], [
+                                width - (width / 3),
+                                height# height - (height / 3)
+                            ]
+                        ])
 
                     p = 0
                     for i in [0, 5, 48, 53]:
@@ -128,16 +147,15 @@ class BirdsEye:
         else:
             print("WARNING!!!! => Perspective camera information not ready.")
 
-    def __init__(self, M, width=cp.FRAME_WIDTH, height=cp.FRAME_HEIGHT):
-        self.width = width
-        self.height = height
-        self.M = M
+    # def __init__(self, M, width=cp.FRAME_WIDTH, height=cp.FRAME_HEIGHT):
+    #     self.width = width
+    #     self.height = height
+    #     self.M = M
 
     def apply(self, img):
         return cv2.warpPerspective(img, self.M, (self.width, self.height))
 
 
-if __name__ == '__main__':
-    detect_camera_perspective_and_save(1)
+
 
 

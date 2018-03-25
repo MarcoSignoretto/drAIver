@@ -6,3 +6,4 @@ CHESSBOARD_ROW_CORNERS = 6
 CHESSBOARD_COL_CORNERS = 9
 
 DEFAULT_BIRDSEYE_CONFIG_PATH = "../config/camera_perspective.npy"
+EXTERNAL_BIRDSEYE_CONFIG_PATH = "../config/ext_camera_perspective.npy"

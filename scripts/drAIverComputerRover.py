@@ -8,6 +8,7 @@ from threading import Thread
 from draiver.communication.motorprotocol import MotorProtocol
 import time
 from draiver.camera.birdseye import BirdsEye
+import draiver.camera.properties as cp
 
 OUTPUT_PORT = 10001
 INPUT_PORT = 10000
@@ -16,7 +17,7 @@ FRAME_WIDTH = 640
 FRAME_HEIGHT = 480
 FPS = 30
 
-SPEED = 50
+SPEED = 20
 
 LINE_DETECTOR_NEGATE = True
 
