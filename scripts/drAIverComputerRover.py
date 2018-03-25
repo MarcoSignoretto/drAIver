@@ -7,6 +7,7 @@ import keyboard
 from threading import Thread
 from draiver.communication.motorprotocol import MotorProtocol
 import time
+from draiver.camera.birdseye import BirdsEye
 
 OUTPUT_PORT = 10001
 INPUT_PORT = 10000
@@ -37,6 +38,8 @@ def image_task():
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.connect(server_address)
 
+    birdview = BirdsEye()
+
     key = ''
     while key != ord('q'):
         length_left = recvall(sock, 16)
@@ -45,8 +48,14 @@ def image_task():
         decimg_left = cv2.imdecode(data_left, 1)
 
         # Performs operations here
+        bird = birdview.apply(decimg_left)
+
 
         cv2.imshow('CLIENT_LEFT', decimg_left)
+        cv2.moveWindow('CLIENT_LEFT', 10, 10)
+
+        cv2.imshow('BIRD', bird)
+        cv2.moveWindow('BIRD', 660, 10)
         key = cv2.waitKey(1) & 0xFF
 
     cv2.destroyAllWindows()
@@ -61,6 +70,7 @@ def motion_task():
     sock.connect(server_address)
 
     mp = MotorProtocol()
+
 
     running = True
     while running:
