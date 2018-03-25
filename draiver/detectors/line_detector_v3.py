@@ -9,6 +9,7 @@ from sklearn.preprocessing import StandardScaler
 from draiver.motion.motorcontroller import MotorController
 from draiver.camera.birdseye import BirdsEye
 import draiver.camera.properties as cp
+from sklearn.preprocessing import normalize
 
 HEIGHT = 480
 WIDTH = 640
@@ -275,6 +276,15 @@ def detect(img, negate = False):
     gray = clahe.apply(gray)
 
     th2 = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 41, -35)  # maybe use a bit little biass
+
+    # Calculate base histogram
+
+    # gray_norm = normalize(gray, axis=1)
+    hist = np.sum(gray, axis=0)
+    hist = np.divide(hist, np.repeat(cp.FRAME_HEIGHT, cp.FRAME_WIDTH))
+    plt.plot(range(0, th2.shape[1]), hist)
+    plt.show()
+
 
     lines = cv2.HoughLines(th2, 1, np.pi/180, 200)
     filtered_lines = []
