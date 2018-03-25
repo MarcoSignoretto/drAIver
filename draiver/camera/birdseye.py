@@ -104,7 +104,7 @@ def detect_camera_perspective_and_save(camera_index, perspective_file_path, exte
 
                     elif command in ['n', 'N']:
                         loop = False
-                    elif command in ['n', 'C']:
+                    elif command in ['c', 'C']:
                         loop = True
                     else:
                         print("Invalid option!")
@@ -119,38 +119,17 @@ def detect_camera_perspective_and_save(camera_index, perspective_file_path, exte
 
 class BirdsEye:
 
-    def __init__(self, perspective_file_path=cp.DEFAULT_BIRDSEYE_CONFIG_PATH, width=cp.FRAME_WIDTH, height=cp.FRAME_HEIGHT):
+    def __init__(self, M = None, perspective_file_path=cp.DEFAULT_BIRDSEYE_CONFIG_PATH, width=cp.FRAME_WIDTH, height=cp.FRAME_HEIGHT):
         self.width = width
         self.height = height
-        # # Init space for perspective detection
-        # self.points = np.empty([4, 2], dtype=np.float32)
-        # # Fixed coordinate for road view
-        # self.destination_points = np.float32([
-        #     [
-        #         width / cp.CHESSBOARD_ROW_CORNERS,
-        #         height / cp.CHESSBOARD_COL_CORNERS
-        #     ], [
-        #         width - (width / cp.CHESSBOARD_ROW_CORNERS),
-        #         height / cp.CHESSBOARD_COL_CORNERS
-        #     ], [
-        #         width / cp.CHESSBOARD_ROW_CORNERS,
-        #         height - (height / cp.CHESSBOARD_COL_CORNERS)
-        #     ], [
-        #         width - (width / cp.CHESSBOARD_ROW_CORNERS),
-        #         height - (height / cp.CHESSBOARD_COL_CORNERS)
-        #     ]
-        # ])
-
-        if os.path.isfile(perspective_file_path):
-            # camera perspective transformation
-            self.M = np.load(perspective_file_path)
+        if M is not None:
+            self.M = M
         else:
-            print("WARNING!!!! => Perspective camera information not ready.")
-
-    # def __init__(self, M, width=cp.FRAME_WIDTH, height=cp.FRAME_HEIGHT):
-    #     self.width = width
-    #     self.height = height
-    #     self.M = M
+            if os.path.isfile(perspective_file_path):
+                # camera perspective transformation
+                self.M = np.load(perspective_file_path)
+            else:
+                print("WARNING!!!! => Perspective camera information not ready.")
 
     def apply(self, img):
         return cv2.warpPerspective(img, self.M, (self.width, self.height))

@@ -14,8 +14,8 @@ from sklearn.preprocessing import normalize
 HEIGHT = 480
 WIDTH = 640
 
-#BASE_PATH = "/mnt/B01EEC811EEC41C8/" # Ubuntu Config
-BASE_PATH = "/Users/marco/Documents/" # Mac Config
+BASE_PATH = "/mnt/B01EEC811EEC41C8/" # Ubuntu Config
+#BASE_PATH = "/Users/marco/Documents/" # Mac Config
 
 INTERSECTION_LINE = 150
 
@@ -264,6 +264,29 @@ def filter_road_lines(car_position, intersections, image_width):
     return left, right
 
 
+def compute_hist(gray, pt1, pt2):
+    origin_x = max(pt1[0], 0)
+    end_x = min(pt2[0], gray.shape[1])
+    w_width = range(origin_x, end_x)
+
+    hist = np.sum(gray[pt1[1]:pt2[1], origin_x:end_x], axis=0)
+    ##hist = cv2.normalizeHist(hist, np.max(hist))
+    #hist = np.divide(hist, np.repeat(np.max(hist), w_width))
+    plt.plot(w_width, hist)
+    plt.show()
+
+    return hist
+
+def compute_window_line(hist):
+    line = None
+    WINDOW_LINE_THRESHOLD = 0
+    max = np.argpartition(hist, -2)[-1:]
+    if hist[max].squeeze() >= WINDOW_LINE_THRESHOLD:
+        line = max
+
+    return line
+
+
 def detect(img, negate = False):
 
     gray = np.zeros((HEIGHT, WIDTH, 1), dtype=np.uint8)
@@ -277,13 +300,76 @@ def detect(img, negate = False):
 
     th2 = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 41, -35)  # maybe use a bit little biass
 
-    # Calculate base histogram
+    # ===============================  Calculate base histogram =============================
 
     # gray_norm = normalize(gray, axis=1)
     hist = np.sum(gray, axis=0)
-    hist = np.divide(hist, np.repeat(cp.FRAME_HEIGHT, cp.FRAME_WIDTH))
+    ##hist = cv2.normalizeHist(hist, np.max(hist))
+    hist = np.divide(hist, np.repeat(np.max(hist), cp.FRAME_WIDTH))
     plt.plot(range(0, th2.shape[1]), hist)
     plt.show()
+
+    # get highest values
+    half_width = (width/2)
+    left_max = np.argpartition(hist[0:int(half_width-1)], -2)[-1:]
+    right_max = np.argpartition(hist[int(half_width):int(width-1)], -2)[-1:] + int(half_width)
+
+    print(left_max, right_max)
+
+    # =============================== THRESHOLD ========================================
+    LINE_THRESHOLD = 0.8
+    left_line = None
+    right_line = None
+
+    WINDOW_WIDTH = 200
+    WINDOW_HEIGHT = height / 6
+    margin = WINDOW_WIDTH / 2
+
+    if hist[left_max].squeeze() >= LINE_THRESHOLD:
+        left_line = left_max
+    if hist[right_max].squeeze() >= LINE_THRESHOLD:
+        right_line = right_max
+
+    # ======================= LEFT LINE
+    pt1 = (int(left_line - margin), int(height - WINDOW_HEIGHT))
+    pt2 = (int(left_line + margin), height)
+    cv2.rectangle(th2, pt1, pt2, (255, 255, 255), thickness=3, lineType=cv2.LINE_8)
+    left_prev = left_line
+    w_y = height - WINDOW_HEIGHT
+    for i in range(0, 5):
+        pt1 = (int(left_prev - margin), int(w_y - WINDOW_HEIGHT))
+        pt2 = (int(left_prev + margin), int(w_y))
+        cv2.rectangle(th2, pt1, pt2, (255, 255, 255), thickness=3, lineType=cv2.LINE_8)
+
+        w_hist = compute_hist(gray, pt1, pt2)
+        left_prev = compute_window_line(w_hist)
+        w_y = w_y - WINDOW_HEIGHT
+
+    # # ======================= RIGHT LINE
+    # pt1 = (int(right_line - margin), int(height - WINDOW_HEIGHT))
+    # pt2 = (int(right_line + margin), height)
+    # cv2.rectangle(th2, pt1, pt2, (255, 255, 255), thickness=3, lineType=cv2.LINE_8)
+    # right_prev = right_line
+    # w_y = height - WINDOW_HEIGHT
+    # for i in range(0, 5):
+    #     pt1 = (int(right_prev - margin), int(w_y - WINDOW_HEIGHT))
+    #     pt2 = (int(right_prev + margin), int(w_y))
+    #     cv2.rectangle(th2, pt1, pt2, (255, 255, 255), thickness=3, lineType=cv2.LINE_8)
+    #
+    #     w_hist = compute_hist(gray, pt1, pt2)
+    #     right_prev = compute_window_line(w_hist)
+    #     w_y = w_y - WINDOW_HEIGHT
+
+
+
+
+
+
+
+
+
+
+
 
 
     lines = cv2.HoughLines(th2, 1, np.pi/180, 200)
@@ -516,22 +602,6 @@ if __name__ == '__main__':
                 478
             ]
         ])
-        # points = np.float32([
-        #     [
-        #         281,
-        #         266
-        #     ], [
-        #         326,
-        #         263
-        #     ], [
-        #         159,
-        #         479
-        #     ], [
-        #         420,
-        #         478
-        #     ]
-        # ])
-        # Fixed coordinate for road view
         destination_points = np.float32([
             [
                 width / cp.CHESSBOARD_ROW_CORNERS,
@@ -541,16 +611,16 @@ if __name__ == '__main__':
                 height / cp.CHESSBOARD_COL_CORNERS
             ], [
                 width / cp.CHESSBOARD_ROW_CORNERS,
-                height - (height / cp.CHESSBOARD_COL_CORNERS)
+                height
             ], [
                 width - (width / cp.CHESSBOARD_ROW_CORNERS),
-                height - (height / cp.CHESSBOARD_COL_CORNERS)
+                height
             ]
         ])
 
         M = cv2.getPerspectiveTransform(points, destination_points)
 
-        birdeye = BirdsEye(M, width, height)
+        birdeye = BirdsEye(M=M, width=width, height=height)
 
         img = cv2.imread(BASE_PATH + path)
         img = cv2.resize(img, (WIDTH, HEIGHT))
