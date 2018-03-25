@@ -10,6 +10,7 @@ from draiver.motion.motorcontroller import MotorController
 from draiver.camera.birdseye import BirdsEye
 import draiver.camera.properties as cp
 from sklearn.preprocessing import normalize
+from numpy.polynomial import polynomial as P
 
 HEIGHT = 480
 WIDTH = 640
@@ -264,30 +265,45 @@ def filter_road_lines(car_position, intersections, image_width):
     return left, right
 
 
-def compute_hist(gray, pt1, pt2):
+def compute_hist(th2, pt1, pt2):
+    """
+
+    :param th2:
+    :param pt1:
+    :param pt2:
+    :return: tuple, histogram and it's origin
+    """
     origin_x = max(pt1[0], 0)
-    end_x = min(pt2[0], gray.shape[1])
+    end_x = min(pt2[0], th2.shape[1])
     w_width = range(origin_x, end_x)
 
-    hist = np.sum(gray[pt1[1]:pt2[1], origin_x:end_x], axis=0)
+    cv2.imshow("WINDOW", th2[pt1[1]:pt2[1], origin_x:end_x])
+    cv2.moveWindow("WINDOW", 10, 10)
+
+    hist = np.sum(th2[pt1[1]:pt2[1], origin_x:end_x], axis=0)
     ##hist = cv2.normalizeHist(hist, np.max(hist))
     #hist = np.divide(hist, np.repeat(np.max(hist), w_width))
     plt.plot(w_width, hist)
     plt.show()
 
-    return hist
+    cv2.waitKey(100)
 
-def compute_window_line(hist):
+    return hist, origin_x
+
+def compute_window_line(hist, origin_x):
     line = None
-    WINDOW_LINE_THRESHOLD = 0
+    WINDOW_LINE_THRESHOLD = 10
     max = np.argpartition(hist, -2)[-1:]
+
     if hist[max].squeeze() >= WINDOW_LINE_THRESHOLD:
-        line = max
+        line = origin_x + max
 
     return line
 
 
 def detect(img, negate = False):
+
+    mask = np.zeros((img.shape[0], img.shape[1]), dtype=np.uint8)
 
     gray = np.zeros((HEIGHT, WIDTH, 1), dtype=np.uint8)
     cv2.cvtColor(img, cv2.COLOR_RGB2GRAY, gray, 1)
@@ -303,7 +319,7 @@ def detect(img, negate = False):
     # ===============================  Calculate base histogram =============================
 
     # gray_norm = normalize(gray, axis=1)
-    hist = np.sum(gray, axis=0)
+    hist = np.sum(th2, axis=0)
     ##hist = cv2.normalizeHist(hist, np.max(hist))
     hist = np.divide(hist, np.repeat(np.max(hist), cp.FRAME_WIDTH))
     plt.plot(range(0, th2.shape[1]), hist)
@@ -317,11 +333,11 @@ def detect(img, negate = False):
     print(left_max, right_max)
 
     # =============================== THRESHOLD ========================================
-    LINE_THRESHOLD = 0.8
+    LINE_THRESHOLD = 0.3
     left_line = None
     right_line = None
 
-    WINDOW_WIDTH = 200
+    WINDOW_WIDTH = 100
     WINDOW_HEIGHT = height / 6
     margin = WINDOW_WIDTH / 2
 
@@ -331,46 +347,74 @@ def detect(img, negate = False):
         right_line = right_max
 
     # ======================= LEFT LINE
-    pt1 = (int(left_line - margin), int(height - WINDOW_HEIGHT))
-    pt2 = (int(left_line + margin), height)
-    cv2.rectangle(th2, pt1, pt2, (255, 255, 255), thickness=3, lineType=cv2.LINE_8)
-    left_prev = left_line
-    w_y = height - WINDOW_HEIGHT
-    for i in range(0, 5):
-        pt1 = (int(left_prev - margin), int(w_y - WINDOW_HEIGHT))
-        pt2 = (int(left_prev + margin), int(w_y))
-        cv2.rectangle(th2, pt1, pt2, (255, 255, 255), thickness=3, lineType=cv2.LINE_8)
-
-        w_hist = compute_hist(gray, pt1, pt2)
-        left_prev = compute_window_line(w_hist)
-        w_y = w_y - WINDOW_HEIGHT
-
-    # # ======================= RIGHT LINE
-    # pt1 = (int(right_line - margin), int(height - WINDOW_HEIGHT))
-    # pt2 = (int(right_line + margin), height)
-    # cv2.rectangle(th2, pt1, pt2, (255, 255, 255), thickness=3, lineType=cv2.LINE_8)
-    # right_prev = right_line
-    # w_y = height - WINDOW_HEIGHT
-    # for i in range(0, 5):
-    #     pt1 = (int(right_prev - margin), int(w_y - WINDOW_HEIGHT))
-    #     pt2 = (int(right_prev + margin), int(w_y))
-    #     cv2.rectangle(th2, pt1, pt2, (255, 255, 255), thickness=3, lineType=cv2.LINE_8)
-    #
-    #     w_hist = compute_hist(gray, pt1, pt2)
-    #     right_prev = compute_window_line(w_hist)
-    #     w_y = w_y - WINDOW_HEIGHT
+    if left_line is not None:
+        pt1 = (int(left_line - margin), int(height - WINDOW_HEIGHT))
+        pt2 = (int(left_line + margin), height)
+        cv2.rectangle(img, pt1, pt2, (0, 255, 0), thickness=3, lineType=cv2.LINE_8)
+        mask[pt1[1]:pt2[1], pt1[0]:pt2[0]] = 255
+        left_prev = left_line
+        w_y = height - WINDOW_HEIGHT
+        for i in range(0, 5):
+            pt1 = (int(left_prev - margin), int(w_y - WINDOW_HEIGHT))
+            pt2 = (int(left_prev + margin), int(w_y))
+            cv2.rectangle(img, pt1, pt2, (0, 255, 0), thickness=3, lineType=cv2.LINE_8)
+            mask[pt1[1]:pt2[1], pt1[0]:pt2[0]] = 255
 
 
 
+            w_hist, w_origin = compute_hist(th2, pt1, pt2)
+            maybe_left = compute_window_line(w_hist, w_origin)
 
+            if maybe_left is not None:
+                left_prev = maybe_left
 
+            w_y = w_y - WINDOW_HEIGHT
+    else:
+        print("LEFT LINE NONE!!!")
 
+    # ======================= RIGHT LINE
+    if right_line is not None:
+        pt1 = (int(right_line - margin), int(height - WINDOW_HEIGHT))
+        pt2 = (int(right_line + margin), height)
+        cv2.rectangle(img, pt1, pt2, (0, 255, 0), thickness=3, lineType=cv2.LINE_8)
+        mask[pt1[1]:pt2[1], pt1[0]:pt2[0]] = 255
+        right_prev = right_line
+        w_y = height - WINDOW_HEIGHT
+        for i in range(0, 5):
+            pt1 = (int(right_prev - margin), int(w_y - WINDOW_HEIGHT))
+            pt2 = (int(right_prev + margin), int(w_y))
+            cv2.rectangle(img, pt1, pt2, (0, 255, 0), thickness=3, lineType=cv2.LINE_8)
 
+            w_hist, w_origin = compute_hist(th2, pt1, pt2)
+            maybe_right = compute_window_line(w_hist, w_origin)
+            mask[pt1[1]:pt2[1], pt1[0]:pt2[0]] = 255
+            
+            if maybe_right is not None:
+                right_prev = maybe_right
 
+            w_y = w_y - WINDOW_HEIGHT
+    else:
+        print("RIGHT LINE NONE!!!")
 
+    # ================================ MASKING REGIONS ================================
 
+    cv2.imshow("Mask", mask)
+    cv2.moveWindow("Mask", 200, 10)
 
+    th2 = cv2.bitwise_and(th2, mask)
 
+    cv2.imshow("th2m", th2)
+    cv2.moveWindow("th2m", 10, 700)
+
+    # ================================ POLYNOMIAL FIT ================================
+
+    # TODO continuare da qui
+    left_samples = np.median(th2[:, 0:int(width/2)], axis=1) # FIXME it not works
+    # dividere immagine in 2
+    # fare mediana rispetto a x in modo da estrarre 1 linea
+    # poi usare poly fit
+
+    P.polyfit()
 
     lines = cv2.HoughLines(th2, 1, np.pi/180, 200)
     filtered_lines = []
