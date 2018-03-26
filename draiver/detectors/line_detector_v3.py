@@ -300,6 +300,35 @@ def compute_window_line(hist, origin_x):
 
     return line
 
+def find_median_line(th2, from_x, to_x):
+    """
+
+    :param th2:
+    :param from_x:
+    :param to_x:
+    :return: x_values and y_values WARNING y is function of x where x is related to the height of the image
+    """
+    res = np.transpose(np.nonzero(th2[:, from_x:to_x]))
+    index = 0
+    poly_points = []
+    # TODO use np.where
+    # for i in range(0, height):
+    #     while
+
+    #left_samples = np.median(th2[:, 0:int(width / 2)], axis=1)  # FIXME it not works
+    x_values = [] #= np.empty((th2.shape[0]), dtype=np.float32)
+    y_values = [] #= np.empty((th2.shape[0]), dtype=np.float32)
+    for i in range(0, th2.shape[0]-1):
+        if i in res[:, 0]:
+            x_values.append(i)
+            y_values.append(from_x + np.median(res[res[:, 0] == i, 1]))
+
+    # np.where(res[:,0] == 0, res[:,1])
+    # np.median(res[res[:, 0] == 0, 1])
+
+    return x_values, y_values
+
+
 
 def detect(img, negate = False):
 
@@ -409,136 +438,144 @@ def detect(img, negate = False):
     # ================================ POLYNOMIAL FIT ================================
 
     # TODO continuare da qui
+    x_values_left, y_values_left = find_median_line(th2, from_x=0, to_x=int((width/2)-1))
+    x_values_right, y_values_right = find_median_line(th2, from_x=int(width/2), to_x=int(width-1))
 
+    for i in range(0, len(x_values_left)-1):
+        cv2.circle(img, (int(y_values_left[i]), int(x_values_left[i])), 1, (255, 0, 0), thickness=1)
+    for i in range(0, len(x_values_right) - 1):
+        cv2.circle(img, (int(y_values_right[i]), int(x_values_right[i])), 1, (255, 0, 0), thickness=1)
 
-    res = np.transpose(np.nonzero(th2[:, 0:int(width/2)]))
-    index = 0
-    poly_points = []
-    # TODO use np.where
-    # for i in range(0, height):
-    #     while
+    if len(x_values_left) > 10: # TODO fix custom threshold for realiable line
+        left_fit = np.polyfit(x_values_left, y_values_left, 2)
+        for i in range(0, img.shape[0]-1):
+            y_fit = left_fit[0]*(i**2) + left_fit[1]*i + left_fit[2]
+            cv2.circle(img, (int(y_fit), i), 1, (0, 0, 255), thickness=1)
 
-
-
-    left_samples = np.median(th2[:, 0:int(width/2)], axis=1) # FIXME it not works
-
-
-    # np.where(res[:,0] == 0, res[:,1])
-    np.median(res[res[:, 0] == 0, 1]) # TODO start from here ( single item I need loop here
+    if len(x_values_right) > 10:  # TODO fix custom threshold for realiable line
+        right_fit = np.polyfit(x_values_right, y_values_right, 2)
+        for i in range(0, img.shape[0] - 1):
+            y_fit = right_fit[0] * (i ** 2) + right_fit[1] * i + right_fit[2]
+            cv2.circle(img, (int(y_fit), i), 1, (0, 0, 255), thickness=1)
+         # TODO start from here ( single item I need loop here
     # dividere immagine in 2
     # fare mediana rispetto a x in modo da estrarre 1 linea
     # poi usare poly fit
 
-    P.polyfit()
+    # P.polyfit()
 
-    lines = cv2.HoughLines(th2, 1, np.pi/180, 200)
-    filtered_lines = []
-    for item in lines:
-
-        rho, theta = item[0]
-
-        a = np.cos(theta)
-        b = np.sin(theta)
-        x0 = a * rho
-        y0 = b * rho
-        x1 = int(x0 + 1000 * (-b))
-        y1 = int(y0 + 1000 * (a))
-        x2 = int(x0 - 1000 * (-b))
-        y2 = int(y0 - 1000 * (a))
-
-        cv2.line(img, (x1, y1), (x2, y2), (255, 0, 0), thickness=2, lineType=cv2.LINE_8)
-
-        if theta < 0.78 or theta > 2.35: #TODO fix theta
-            if DEBUG:
-                cv2.line(img, (x1, y1), (x2, y2), (0, 255, 0), thickness=1, lineType=cv2.LINE_8)
-
-            filtered_lines.append((rho, theta))
-
-    print("============ Filtered lines =============")
-
-    rhos = []
-    thetas = []
-    for rho, theta in filtered_lines:
-        thetas.append(theta)
-        rhos.append(rho)
-
-    if PLOT:
-        plt.scatter(rhos, thetas)
-        plt.show()
-
-    line_points = [list(t) for t in zip(rhos, thetas)]
-
-    # ===== CLUSTERING ============
-
-    cluster_result = cluster_lines(line_points)
-
-    labels = cluster_result.labels_
-    n_clusters = len(set(labels)) - (1 if -1 in labels else 0)
-    cluster_items = {}
-    for i in range(0, n_clusters):
-        cluster_items[i] = []
-
-    for i in range(0, len(labels)):
-        cluster = labels[i]
-        if cluster != -1:
-            cluster_items[cluster].append(np.asarray(line_points[i]))
-
-    centroids = []
-    for key, value in cluster_items.items():
-        centroids.append(np.asarray(value).mean(axis=0))
-
-    for center in centroids:
-        a = math.cos(center[1])
-        b = math.sin(center[1])
-
-        x0 = a * center[0]
-        y0 = b * center[0]
-
-        pt1 = (int(round(x0 + 1000 * (-b))), int(round(y0 + 1000 * (a))))
-        # pt1 = (int(round(y0 + 1000 * (a))), int(round(x0 + 1000 * (-b))))
-        pt2 = (int(round(x0 - 1000 * (-b))), int(round(y0 - 1000 * (a))))
-        # pt2 = (int(round(y0 - 1000 * (a))), int(round(x0 - 1000 * (-b))))
-
-        if DEBUG:
-            cv2.line(img, pt1, pt2, (0, 0, 0), thickness=3, lineType=cv2.LINE_8)
-
-    if PLOT:
-        plt.show()
-
-    pt1 = (0, img.shape[0]-INTERSECTION_LINE)
-    pt2 = (img.shape[1], img.shape[0]-INTERSECTION_LINE)
+    # lines = cv2.HoughLines(th2, 1, np.pi/180, 200)
+    # filtered_lines = []
+    # for item in lines:
+    #
+    #     rho, theta = item[0]
+    #
+    #     a = np.cos(theta)
+    #     b = np.sin(theta)
+    #     x0 = a * rho
+    #     y0 = b * rho
+    #     x1 = int(x0 + 1000 * (-b))
+    #     y1 = int(y0 + 1000 * (a))
+    #     x2 = int(x0 - 1000 * (-b))
+    #     y2 = int(y0 - 1000 * (a))
+    #
+    #     cv2.line(img, (x1, y1), (x2, y2), (255, 0, 0), thickness=2, lineType=cv2.LINE_8)
+    #
+    #     if theta < 0.78 or theta > 2.35: #TODO fix theta
+    #         if DEBUG:
+    #             cv2.line(img, (x1, y1), (x2, y2), (0, 255, 0), thickness=1, lineType=cv2.LINE_8)
+    #
+    #         filtered_lines.append((rho, theta))
+    #
+    # print("============ Filtered lines =============")
+    #
+    # rhos = []
+    # thetas = []
+    # for rho, theta in filtered_lines:
+    #     thetas.append(theta)
+    #     rhos.append(rho)
+    #
+    # if PLOT:
+    #     plt.scatter(rhos, thetas)
+    #     plt.show()
+    #
+    # line_points = [list(t) for t in zip(rhos, thetas)]
+    #
+    # # ===== CLUSTERING ============
+    #
+    # cluster_result = cluster_lines(line_points)
+    #
+    # labels = cluster_result.labels_
+    # n_clusters = len(set(labels)) - (1 if -1 in labels else 0)
+    # cluster_items = {}
+    # for i in range(0, n_clusters):
+    #     cluster_items[i] = []
+    #
+    # for i in range(0, len(labels)):
+    #     cluster = labels[i]
+    #     if cluster != -1:
+    #         cluster_items[cluster].append(np.asarray(line_points[i]))
+    #
+    # centroids = []
+    # for key, value in cluster_items.items():
+    #     centroids.append(np.asarray(value).mean(axis=0))
+    #
+    # for center in centroids:
+    #     a = math.cos(center[1])
+    #     b = math.sin(center[1])
+    #
+    #     x0 = a * center[0]
+    #     y0 = b * center[0]
+    #
+    #     pt1 = (int(round(x0 + 1000 * (-b))), int(round(y0 + 1000 * (a))))
+    #     # pt1 = (int(round(y0 + 1000 * (a))), int(round(x0 + 1000 * (-b))))
+    #     pt2 = (int(round(x0 - 1000 * (-b))), int(round(y0 - 1000 * (a))))
+    #     # pt2 = (int(round(y0 - 1000 * (a))), int(round(x0 - 1000 * (-b))))
+    #
+    #     if DEBUG:
+    #         cv2.line(img, pt1, pt2, (0, 0, 0), thickness=3, lineType=cv2.LINE_8)
+    #
+    # if PLOT:
+    #     plt.show()
+    #
+    # pt1 = (0, img.shape[0]-INTERSECTION_LINE)
+    # pt2 = (img.shape[1], img.shape[0]-INTERSECTION_LINE)
+    #
+    # if DEBUG:
+    #     cv2.line(img, pt1, pt2, (34, 112, 200), thickness=4, lineType=cv2.LINE_8)
+    #
+    # #==================== CALCULATE INTERSECTIONS ==========================
+    #
+    # intersections = find_intersections(centroids, img.shape[0]-INTERSECTION_LINE)
+    #
+    # for intersection in intersections:
+    #     if intersection >= 0 and intersection <= img.shape[1]:
+    #         if DEBUG:
+    #             cv2.circle(img, (int(np.round(intersection)), img.shape[0]-INTERSECTION_LINE), 5, (134, 234, 100), thickness=2)
+    #
+    # #==================== FIND 2 ROAD LINES ========================
+    #
+    # car_position = img.shape[1] / 2
+    #
+    # left, right = filter_road_lines(car_position, intersections, img.shape[1])
+    # TODO FIXME remove next line
+    left = None
+    right = None
+    car_position = None
 
     if DEBUG:
-        cv2.line(img, pt1, pt2, (34, 112, 200), thickness=4, lineType=cv2.LINE_8)
-
-    #==================== CALCULATE INTERSECTIONS ==========================
-
-    intersections = find_intersections(centroids, img.shape[0]-INTERSECTION_LINE)
-
-    for intersection in intersections:
-        if intersection >= 0 and intersection <= img.shape[1]:
-            if DEBUG:
-                cv2.circle(img, (int(np.round(intersection)), img.shape[0]-INTERSECTION_LINE), 5, (134, 234, 100), thickness=2)
-
-    #==================== FIND 2 ROAD LINES ========================
-
-    car_position = img.shape[1] / 2
-
-    left, right = filter_road_lines(car_position, intersections, img.shape[1])
-
-    if DEBUG:
-        cv2.circle(img, (int(np.round(left)), img.shape[0] - INTERSECTION_LINE), 5, (0, 0, 255), thickness=2)
-        cv2.circle(img, (int(np.round(right)), img.shape[0] - INTERSECTION_LINE), 5, (0, 0, 255), thickness=2)
-
-        #  center
-        lines_range = right - left
-        mid = left + lines_range / 2
-        cv2.circle(img, (int(np.round(mid)), img.shape[0] - INTERSECTION_LINE), 7, (0, 255, 255), thickness=2)
-
-        #  car position
-        cv2.circle(img, (int(np.round(car_position)), img.shape[0] - INTERSECTION_LINE), 5, (14, 34, 255), thickness=5)
-
-        #cv2.imshow("Gray", gray)
+        # cv2.circle(img, (int(np.round(left)), img.shape[0] - INTERSECTION_LINE), 5, (0, 0, 255), thickness=2)
+        # cv2.circle(img, (int(np.round(right)), img.shape[0] - INTERSECTION_LINE), 5, (0, 0, 255), thickness=2)
+        #
+        # #  center
+        # lines_range = right - left
+        # mid = left + lines_range / 2
+        # cv2.circle(img, (int(np.round(mid)), img.shape[0] - INTERSECTION_LINE), 7, (0, 255, 255), thickness=2)
+        #
+        # #  car position
+        # cv2.circle(img, (int(np.round(car_position)), img.shape[0] - INTERSECTION_LINE), 5, (14, 34, 255), thickness=5)
+        #
+        # #cv2.imshow("Gray", gray)
         # cv2.imshow("Otzu", thr)
 
         cv2.imshow("Adapt mean", th2)
