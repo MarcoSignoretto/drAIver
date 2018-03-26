@@ -409,7 +409,22 @@ def detect(img, negate = False):
     # ================================ POLYNOMIAL FIT ================================
 
     # TODO continuare da qui
+
+
+    res = np.transpose(np.nonzero(th2[:, 0:int(width/2)]))
+    index = 0
+    poly_points = []
+    # TODO use np.where
+    # for i in range(0, height):
+    #     while
+
+
+
     left_samples = np.median(th2[:, 0:int(width/2)], axis=1) # FIXME it not works
+
+
+    # np.where(res[:,0] == 0, res[:,1])
+    np.median(res[res[:, 0] == 0, 1]) # TODO start from here ( single item I need loop here
     # dividere immagine in 2
     # fare mediana rispetto a x in modo da estrarre 1 linea
     # poi usare poly fit
