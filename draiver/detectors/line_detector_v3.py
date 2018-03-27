@@ -252,6 +252,119 @@ def detect(img, negate=False):
 
     return left, right
 
+# TODO remove
+def test_color_space():
+    imgLAB = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
+    imgHSV = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    imgHLS = cv2.cvtColor(img, cv2.COLOR_BGR2HLS)
+
+    # imgHSV[] = cv2.equalizeHist(V)
+
+    # TODO cut image on half to have strongest line detection and avoid noise
+
+    # TODO fix linee tratteggiate
+
+    L, A, B = cv2.split(imgLAB)
+    H, S, V = cv2.split(imgHSV)
+    h, l, s = cv2.split(imgHLS)
+
+    # =========================
+
+    # python
+    bgr = [215, 215, 215]
+    thresh = 45
+
+    minBGR = np.array([bgr[0] - thresh, bgr[1] - thresh, bgr[2] - thresh])
+    maxBGR = np.array([bgr[0] + thresh, bgr[1] + thresh, bgr[2] + thresh])
+
+    maskBGR = cv2.inRange(img, minBGR, maxBGR)
+    resultBGR = cv2.bitwise_and(img, img, mask=maskBGR)
+
+    # ======================================= HSV ==================================
+    # convert 1D array to 3D, then convert it to HSV and take the first element
+    # this will be same as shown in the above figure [65, 229, 158]
+    hsv = cv2.cvtColor(np.uint8([[bgr]]), cv2.COLOR_BGR2HSV)[0][0]
+    hsvMIN = [0, 0, 200]
+    hsvMAX = [50, 20, 255]
+
+    # minHSV = np.array([hsvMIN[0], hsvMIN[1], hsvMIN[2]])
+    # maxHSV = np.array([hsvMAX[0], hsvMAX[1], hsvMAX[2]])
+
+    minHSV = np.array([hsv[0] - thresh, hsv[1] - thresh, hsv[2] - thresh])
+    maxHSV = np.array([hsv[0] + thresh, hsv[1] + thresh, hsv[2] + thresh])
+
+    maskHSV = cv2.inRange(imgHSV, minHSV, maxHSV)
+    resultHSV = cv2.bitwise_and(imgHSV, imgHSV, mask=maskHSV)
+    resultHSV = cv2.cvtColor(resultHSV, cv2.COLOR_HSV2BGR)
+
+    # ======================================= LAB ==================================
+    # convert 1D array to 3D, then convert it to LAB and take the first element
+    lab = cv2.cvtColor(np.uint8([[bgr]]), cv2.COLOR_BGR2LAB)[0][0]
+
+    minLAB = np.array([lab[0] - thresh, lab[1] - thresh, lab[2] - thresh])
+    maxLAB = np.array([lab[0] + thresh, lab[1] + thresh, lab[2] + thresh])
+
+    maskLAB = cv2.inRange(imgLAB, minLAB, maxLAB)
+    resultLAB = cv2.bitwise_and(imgLAB, imgLAB, mask=maskLAB)
+    resultLAB = cv2.cvtColor(resultLAB, cv2.COLOR_LAB2BGR)
+
+    # ======================================= HLS ==================================
+
+    # AUTO
+    hls = cv2.cvtColor(np.uint8([[bgr]]), cv2.COLOR_BGR2HLS)[0][0]
+
+    minHLS = np.array([hls[0] - thresh, hls[1] - thresh, hls[2] - thresh])
+    maxHLS = np.array([hls[0] + thresh, hls[1] + thresh, hls[2] + thresh])
+    maskHLS = cv2.inRange(imgHLS, minHLS, maxHLS)
+
+    resultHLS = cv2.bitwise_and(imgHLS, imgHLS, mask=maskHLS)
+    resultHLS = cv2.cvtColor(resultHLS, cv2.COLOR_HLS2BGR)
+
+    # #with different setting
+    #
+    # #hls = cv2.cvtColor(np.uint8([[bgr]]), cv2.COLOR_BGR2HLS)[0][0]
+    # h, l, s = cv2.split(imgHLS)
+    # hlsMIN = [0, 0, 0]
+    # hlsMAX = [110, 255, 45]
+    #
+    # # use full range for l because then thresholded
+    # l = cv2.adaptiveThreshold(l, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 31,
+    #                           -10)  # maybe use a bit little biass
+    #
+    # clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+    # s = clahe.apply(s)
+    #
+    # # s = cv2.equalizeHist(s)
+    #
+    #
+    #
+    # # # ================ hist norm ====================
+    # # hist, bins = np.histogram(img.flatten(), 256, [0, 256])
+    # # cdf = hist.cumsum()
+    # # cdf_normalized = cdf * hist.max() / cdf.max()
+    # # plt.plot(cdf_normalized, color='b')
+    # # plt.hist(img.flatten(), 256, [0, 256], color='r')
+    # # plt.xlim([0, 256])
+    # # plt.legend(('cdf', 'histogram'), loc='upper left')
+    # # plt.show()
+    #
+    #
+    # # minHLS = np.array([hls[0] - thresh, hls[1] - thresh, hls[2] - thresh])
+    # # maxHLS = np.array([hls[0] + thresh, hls[1] + thresh, hls[2] + thresh])
+    # minHLS = np.array([hlsMIN[0], hlsMIN[1], hlsMIN[2]])
+    # maxHLS = np.array([hlsMAX[0], hlsMAX[1], hlsMAX[2]])
+    #
+    #
+    # maskHLS = cv2.inRange(imgHLS, minHLS, maxHLS)
+    #
+    # resultHLS = cv2.bitwise_and(imgHLS, imgHLS, mask=maskHLS)
+    # #
+    # resultHLS = cv2.bitwise_and(resultHLS, resultHLS, mask=l)
+    #
+    # resultHLS = cv2.cvtColor(resultHLS, cv2.COLOR_HLS2BGR)
+
+    # ========================
+
 
 if __name__ == '__main__':
     # Adaptive gaussian or mean ( gaussian is a bit better )
@@ -317,135 +430,15 @@ if __name__ == '__main__':
         img = cv2.medianBlur(img, 3)  # remove noise from HS channels TODO choose
 
         # Work only on bird view
-        cv2.imshow("Frame", img)
+        if DEBUG:
+            cv2.imshow("Frame", img)
         img = birdeye.apply(img)
 
+        # ======================== DETECTION ===========================
 
-
-        imgLAB = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
-        imgHSV = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-        imgHLS = cv2.cvtColor(img, cv2.COLOR_BGR2HLS)
-
-        #imgHSV[] = cv2.equalizeHist(V)
-
-
-
-        # TODO cut image on half to have strongest line detection and avoid noise
-
-        # TODO fix linee tratteggiate
-
-
-
-        L, A, B = cv2.split(imgLAB)
-        H, S, V = cv2.split(imgHSV)
-        h, l, s = cv2.split(imgHLS)
-
-
-
-
-
-        #=========================
-
-
-
-
-
-        # python
-        bgr = [215, 215, 215]
-        thresh = 45
-
-        minBGR = np.array([bgr[0] - thresh, bgr[1] - thresh, bgr[2] - thresh])
-        maxBGR = np.array([bgr[0] + thresh, bgr[1] + thresh, bgr[2] + thresh])
-
-        maskBGR = cv2.inRange(img, minBGR, maxBGR)
-        resultBGR = cv2.bitwise_and(img, img, mask=maskBGR)
-
-        # ======================================= HSV ==================================
-        # convert 1D array to 3D, then convert it to HSV and take the first element
-        # this will be same as shown in the above figure [65, 229, 158]
-        hsv = cv2.cvtColor(np.uint8([[bgr]]), cv2.COLOR_BGR2HSV)[0][0]
-        hsvMIN = [0, 0, 200]
-        hsvMAX = [50, 20, 255]
-
-
-        #minHSV = np.array([hsvMIN[0], hsvMIN[1], hsvMIN[2]])
-        #maxHSV = np.array([hsvMAX[0], hsvMAX[1], hsvMAX[2]])
-
-        minHSV = np.array([hsv[0] - thresh, hsv[1] - thresh, hsv[2] - thresh])
-        maxHSV = np.array([hsv[0] + thresh, hsv[1] + thresh, hsv[2] + thresh])
-
-        maskHSV = cv2.inRange(imgHSV, minHSV, maxHSV)
-        resultHSV = cv2.bitwise_and(imgHSV, imgHSV, mask=maskHSV)
-        resultHSV = cv2.cvtColor(resultHSV, cv2.COLOR_HSV2BGR)
-
-        # ======================================= LAB ==================================
-        # convert 1D array to 3D, then convert it to LAB and take the first element
-        lab = cv2.cvtColor(np.uint8([[bgr]]), cv2.COLOR_BGR2LAB)[0][0]
-
-        minLAB = np.array([lab[0] - thresh, lab[1] - thresh, lab[2] - thresh])
-        maxLAB = np.array([lab[0] + thresh, lab[1] + thresh, lab[2] + thresh])
-
-        maskLAB = cv2.inRange(imgLAB, minLAB, maxLAB)
-        resultLAB = cv2.bitwise_and(imgLAB, imgLAB, mask=maskLAB)
-        resultLAB = cv2.cvtColor(resultLAB, cv2.COLOR_LAB2BGR)
-
-        # ======================================= HLS ==================================
-
-        # AUTO
-        hls = cv2.cvtColor(np.uint8([[bgr]]), cv2.COLOR_BGR2HLS)[0][0]
-
-        minHLS = np.array([hls[0] - thresh, hls[1] - thresh, hls[2] - thresh])
-        maxHLS = np.array([hls[0] + thresh, hls[1] + thresh, hls[2] + thresh])
-        maskHLS = cv2.inRange(imgHLS, minHLS, maxHLS)
-
-        resultHLS = cv2.bitwise_and(imgHLS, imgHLS, mask=maskHLS)
-        resultHLS = cv2.cvtColor(resultHLS, cv2.COLOR_HLS2BGR)
-
-        # #with different setting
-        #
-        # #hls = cv2.cvtColor(np.uint8([[bgr]]), cv2.COLOR_BGR2HLS)[0][0]
-        # h, l, s = cv2.split(imgHLS)
-        # hlsMIN = [0, 0, 0]
-        # hlsMAX = [110, 255, 45]
-        #
-        # # use full range for l because then thresholded
-        # l = cv2.adaptiveThreshold(l, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 31,
-        #                           -10)  # maybe use a bit little biass
-        #
-        # clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-        # s = clahe.apply(s)
-        #
-        # # s = cv2.equalizeHist(s)
-        #
-        #
-        #
-        # # # ================ hist norm ====================
-        # # hist, bins = np.histogram(img.flatten(), 256, [0, 256])
-        # # cdf = hist.cumsum()
-        # # cdf_normalized = cdf * hist.max() / cdf.max()
-        # # plt.plot(cdf_normalized, color='b')
-        # # plt.hist(img.flatten(), 256, [0, 256], color='r')
-        # # plt.xlim([0, 256])
-        # # plt.legend(('cdf', 'histogram'), loc='upper left')
-        # # plt.show()
-        #
-        #
-        # # minHLS = np.array([hls[0] - thresh, hls[1] - thresh, hls[2] - thresh])
-        # # maxHLS = np.array([hls[0] + thresh, hls[1] + thresh, hls[2] + thresh])
-        # minHLS = np.array([hlsMIN[0], hlsMIN[1], hlsMIN[2]])
-        # maxHLS = np.array([hlsMAX[0], hlsMAX[1], hlsMAX[2]])
-        #
-        #
-        # maskHLS = cv2.inRange(imgHLS, minHLS, maxHLS)
-        #
-        # resultHLS = cv2.bitwise_and(imgHLS, imgHLS, mask=maskHLS)
-        # #
-        # resultHLS = cv2.bitwise_and(resultHLS, resultHLS, mask=l)
-        #
-        # resultHLS = cv2.cvtColor(resultHLS, cv2.COLOR_HLS2BGR)
-
-        #========================
         left, right = detect(img)
+
+        # ======================== PLOT ===========================
 
         if left is not None:
             for i in range(0, img.shape[0]-1):
@@ -457,57 +450,8 @@ if __name__ == '__main__':
                 y_fit = right[0] * (i ** 2) + right[1] * i + right[2]
                 cv2.circle(img, (int(y_fit), i), 1, (0, 0, 255), thickness=1)
 
-        #l = cv2.adaptiveThreshold(l, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 31, -10)  # maybe use a bit little biass
-
-
-
-        # cv2.imshow("L", L)
-        # cv2.imshow("A", A)
-        # cv2.imshow("B", B)
-
-        # cv2.imshow("H", H)
-        # cv2.moveWindow("H", 100, 100)
-        # cv2.imshow("S", S)
-        # cv2.moveWindow("S", 800, 100)
-        # cv2.imshow("V", V)
-        # cv2.moveWindow("V", 1500, 100)
-        #
-        # cv2.imshow("h", h)
-        # cv2.moveWindow("h", 100, 700)
-        # cv2.imshow("l", l)
-        # cv2.moveWindow("l", 800, 700)
-        # cv2.imshow("s", s)
-        # cv2.moveWindow("s", 1500, 700)
-
-        # cv2.imshow("Result HSV", gray)
-        # cv2.moveWindow("Result HSV", 800, 100)
-
-
-        # cv2.imshow("Result HSV", resultHSV)
-        # cv2.moveWindow("Result HSV", 1500, 100)
-        #
-        # cv2.imshow("Result HLS", resultHLS)
-        # cv2.moveWindow("Result HLS", 100, 800)
-
-        # Work only on bird view
         cv2.imshow("Frame d", img)
         cv2.moveWindow("Frame d", 100, 100)
-
-        # cv2.imshow("My", th2)
-        # cv2.moveWindow("My", 800, 800)
-        #
-        # cv2.imshow("Gray", gray)
-        # cv2.moveWindow("Gray", 1500, 800)
-
-        # img = img_threshold(img)
-        #
-        # # MOrph
-        # cv2.imshow("Morph", img)
-        # cv2.moveWindow("Morph", 100, 700)
-
-
-
         cv2.waitKey(0)
-
 
     cv2.destroyAllWindows()
