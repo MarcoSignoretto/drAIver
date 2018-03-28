@@ -40,7 +40,7 @@ def image_task():
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.connect(server_address)
 
-    birdview = BirdsEye()
+    birdview = BirdsEye(negate=True)
 
     key = ''
     while key != ord('q'):
@@ -52,7 +52,7 @@ def image_task():
         # Performs operations here
         bird = birdview.apply(decimg_left)
         # Line Detection
-        left, right = ld.detect(bird)
+        left, right = ld.detect(bird, negate=True)
 
         # ======================== PLOT ===========================
 

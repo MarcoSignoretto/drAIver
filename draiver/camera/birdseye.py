@@ -119,9 +119,13 @@ def detect_camera_perspective_and_save(camera_index, perspective_file_path, exte
 
 class BirdsEye:
 
-    def __init__(self, M = None, perspective_file_path=cp.DEFAULT_BIRDSEYE_CONFIG_PATH, width=cp.FRAME_WIDTH, height=cp.FRAME_HEIGHT):
+    def __init__(self, M = None, perspective_file_path=cp.DEFAULT_BIRDSEYE_CONFIG_PATH, width=cp.FRAME_WIDTH, height=cp.FRAME_HEIGHT, negate=False):
         self.width = width
         self.height = height
+        if negate:
+            self.border_value = 0
+        else:
+            self.border_value = 255
         if M is not None:
             self.M = M
         else:
@@ -132,7 +136,7 @@ class BirdsEye:
                 print("WARNING!!!! => Perspective camera information not ready.")
 
     def apply(self, img):
-        return cv2.warpPerspective(img, self.M, (self.width, self.height))
+        return cv2.warpPerspective(img, self.M, (self.width, self.height), borderMode=cv2.BORDER_CONSTANT, borderValue=(self.border_value, self.border_value, self.border_value))
 
 
 

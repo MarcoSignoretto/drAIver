@@ -133,7 +133,10 @@ def detect(img, negate=False):
 
     mask = np.zeros((img.shape[0], img.shape[1]), dtype=np.uint8)
 
-    gray = np.zeros((HEIGHT, WIDTH, 1), dtype=np.uint8)
+    if not negate:
+        gray = np.zeros((height, width, 1), dtype=np.uint8)
+    else:
+        gray = np.full((height, width, 1), 255, dtype=np.uint8)
     cv2.cvtColor(img, cv2.COLOR_RGB2GRAY, gray, 1)
     if negate:
         gray = abs(255 - gray)
