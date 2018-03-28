@@ -8,6 +8,7 @@ from threading import Thread
 from draiver.communication.motorprotocol import MotorProtocol
 import time
 from draiver.camera.birdseye import BirdsEye
+import draiver.detectors.line_detector_v3 as ld
 import draiver.camera.properties as cp
 
 OUTPUT_PORT = 10001
@@ -50,6 +51,20 @@ def image_task():
 
         # Performs operations here
         bird = birdview.apply(decimg_left)
+        # Line Detection
+        left, right = ld.detect(bird)
+
+        # ======================== PLOT ===========================
+
+        if left is not None:
+            for i in range(0, bird.shape[0] - 1):
+                y_fit = left[0] * (i ** 2) + left[1] * i + left[2]
+                cv2.circle(bird, (int(y_fit), i), 1, (0, 0, 255), thickness=1)
+
+        if right is not None:
+            for i in range(0, bird.shape[0] - 1):
+                y_fit = right[0] * (i ** 2) + right[1] * i + right[2]
+                cv2.circle(bird, (int(y_fit), i), 1, (0, 0, 255), thickness=1)
 
 
         cv2.imshow('CLIENT_LEFT', decimg_left)

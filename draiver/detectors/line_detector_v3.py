@@ -14,8 +14,8 @@ from sklearn.preprocessing import normalize
 HEIGHT = 480
 WIDTH = 640
 
-BASE_PATH = "/mnt/B01EEC811EEC41C8/" # Ubuntu Config
-#BASE_PATH = "/Users/marco/Documents/" # Mac Config
+# BASE_PATH = "/mnt/B01EEC811EEC41C8/" # Ubuntu Config
+BASE_PATH = "/Users/marco/Documents/" # Mac Config
 
 INTERSECTION_LINE = 150
 
@@ -127,6 +127,9 @@ def update_mask_for_line(th2, line, mask, window_width, window_height, debug_img
 def detect(img, negate=False):
     left = None
     right = None
+
+    width = img.shape[1]
+    height = img.shape[0]
 
     mask = np.zeros((img.shape[0], img.shape[1]), dtype=np.uint8)
 
