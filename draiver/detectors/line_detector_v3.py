@@ -19,7 +19,7 @@ BASE_PATH = "/Users/marco/Documents/" # Mac Config
 
 INTERSECTION_LINE = 150
 
-DEBUG = False
+DEBUG = True
 PLOT = False
 
 def compute_hist(th2, pt1, pt2):
@@ -174,25 +174,25 @@ def detect(img, negate=False):
     if hist[right_max].squeeze() >= LINE_THRESHOLD:
         right_line = right_max
 
-    # ======================= LEFT LINE
-    if left_line is not None:
-        update_mask_for_line(th2, left_line, mask, WINDOW_WIDTH, WINDOW_HEIGHT, debug_img=img)
-    else:
-        print("LEFT LINE NONE!!!")
-
-    # ======================= RIGHT LINE
-    if right_line is not None:
-        update_mask_for_line(th2, right_line, mask, WINDOW_WIDTH, WINDOW_HEIGHT, debug_img=img)
-    else:
-        print("RIGHT LINE NONE!!!")
+    # # ======================= LEFT LINE
+    # if left_line is not None:
+    #     update_mask_for_line(th2, left_line, mask, WINDOW_WIDTH, WINDOW_HEIGHT, debug_img=img)
+    # else:
+    #     print("LEFT LINE NONE!!!")
+    #
+    # # ======================= RIGHT LINE
+    # if right_line is not None:
+    #     update_mask_for_line(th2, right_line, mask, WINDOW_WIDTH, WINDOW_HEIGHT, debug_img=img)
+    # else:
+    #     print("RIGHT LINE NONE!!!")
 
     # ================================ MASKING REGIONS ================================
 
-    if DEBUG:
-        cv2.imshow("Mask", mask)
-        cv2.moveWindow("Mask", 200, 10)
-
-    th2 = cv2.bitwise_and(th2, mask)
+    # if DEBUG:
+    #     cv2.imshow("Mask", mask)
+    #     cv2.moveWindow("Mask", 200, 10)
+    #
+    # th2 = cv2.bitwise_and(th2, mask)
 
     if DEBUG:
         cv2.imshow("th2m", th2)
@@ -230,6 +230,7 @@ def detect(img, negate=False):
                 cv2.circle(img, (int(y_fit), i), 1, (0, 0, 255), thickness=1)
 
     if DEBUG:
+        pass
         # cv2.circle(img, (int(np.round(left)), img.shape[0] - INTERSECTION_LINE), 5, (0, 0, 255), thickness=2)
         # cv2.circle(img, (int(np.round(right)), img.shape[0] - INTERSECTION_LINE), 5, (0, 0, 255), thickness=2)
         #
@@ -244,9 +245,7 @@ def detect(img, negate=False):
         # #cv2.imshow("Gray", gray)
         # cv2.imshow("Otzu", thr)
 
-        cv2.imshow("Adapt mean", th2)
-        cv2.moveWindow("Adapt mean", 1500, 100)
-        #cv2.imshow("Img", img)
+        # cv2.imshow("Img", img)
         # cv2.imshow("Adapt gaussian", th3)
         # cv2.imshow("Canny", edges)
         # cv2.imshow("CannyDilated", dilate)
@@ -254,7 +253,9 @@ def detect(img, negate=False):
         # cv2.imshow("Adapt gaussian erosion", th3erosion)
         # cv2.imshow("erosion", erosion)
 
-        cv2.waitKey(1)
+    cv2.imshow("Adapt mean", th2)
+    cv2.moveWindow("Adapt mean", 1500, 100)
+    cv2.waitKey(1)
 
     return left, right
 
