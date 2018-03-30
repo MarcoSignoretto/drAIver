@@ -9,20 +9,29 @@ import draiver.detectors.line_detector_v3 as ld
 DEBUG = False
 PLOT = False
 
-# BASE_PATH = "/mnt/B01EEC811EEC41C8/" # Ubuntu Config
-BASE_PATH = "/Users/marco/Documents/"
+BASE_PATH = "/mnt/B01EEC811EEC41C8/" # Ubuntu Config
+#  BASE_PATH = "/Users/marco/Documents/"
 
-VIDEO_PATH = "Datasets/drAIver/KITTY/2011_09_26/2011_09_26_drive_0027_sync/image_03/data/"
+VIDEO_PATH_1 = "Datasets/drAIver/KITTY/2011_09_26/2011_09_26_drive_0027_sync/image_03/data/"
+# TODO bad !! difficult for dotted lines and light changes
+VIDEO_PATH_2 = "Datasets/drAIver/KITTY/2011_09_26/2011_09_26_drive_0028_sync/image_02/data/"
+# TODO 03 extreme light condition fails, with precise warping fixed!!
+VIDEO_PATH_3 = "Datasets/drAIver/KITTY/2011_09_29/2011_09_29_drive_0004_sync/image_03/data/"
+# TODO very difficult on dotted lines
+
+VIDEO_FRAMES_1 = 187
+VIDEO_FRAMES_2 = 429
+VIDEO_FRAMES_3 = 338
 
 if __name__ == '__main__':
     # Adaptive gaussian or mean ( gaussian is a bit better )
     # gaussian a difficoltà sul molto scuro
-
-    video_frames = 187
+    video_path = VIDEO_PATH_3
+    video_frames = VIDEO_FRAMES_3
 
     for i in range(0, video_frames):
         file_name = format(i, '010d')
-        path = VIDEO_PATH+file_name+'.png'
+        path = video_path+file_name+'.png'
         print(path)
 
         width = cp.FRAME_WIDTH

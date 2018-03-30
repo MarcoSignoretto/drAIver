@@ -14,17 +14,17 @@ from sklearn.preprocessing import normalize
 HEIGHT = 480
 WIDTH = 640
 
-# BASE_PATH = "/mnt/B01EEC811EEC41C8/" # Ubuntu Config
-BASE_PATH = "/Users/marco/Documents/" # Mac Config
+BASE_PATH = "/mnt/B01EEC811EEC41C8/" # Ubuntu Config
+# BASE_PATH = "/Users/marco/Documents/" # Mac Config
 
 INTERSECTION_LINE = 150
 
 DEBUG = False
 PLOT = False
 
-MEDIAN_LINE_THRESHOLD = 30  #TODO  tested for robot
-# WINDOW_LINE_THRESHOLD = 10
-WINDOW_LINE_THRESHOLD = 5
+
+WINDOW_LINE_THRESHOLD = 10
+#  WINDOW_LINE_THRESHOLD = 5
 
 def compute_hist(th2, pt1, pt2):
     """
@@ -67,7 +67,7 @@ def compute_window_line(hist, origin_x):
 
     return line
 
-def find_median_line(th2, mask):
+def find_median_line(th2, mask, threshold):
     """
 
     :param th2: binary thresholded image used to compute the median line
@@ -86,7 +86,7 @@ def find_median_line(th2, mask):
             items = res[res[:, 0] == i, 1]
             items = [item for item in items if mask[i][item] == 255]
 
-            if len(items) > MEDIAN_LINE_THRESHOLD:
+            if len(items) > threshold:
                 x_values.append(i)
                 y_values.append(np.median(items))
 
@@ -159,6 +159,12 @@ def update_mask_for_line(th2, line, mask, window_width, window_height, debug_img
 
 
 def detect(img, negate=False, robot=False):
+
+    if robot:
+        MEDIAN_LINE_THRESHOLD = 30  # Robot
+    else:
+        MEDIAN_LINE_THRESHOLD = 10  # Kitty
+
     left = None
     right = None
 
@@ -183,10 +189,10 @@ def detect(img, negate=False, robot=False):
     # gray = clahe.apply(gray)
 
     # Use adaptive thresholding because it is better for difficult lighting condition
-    if robot:
-        th2 = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 71, -15)  # TODO values for ROBOT   this should be ok
-    else:
-        th2 = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 41, -35)  #TODO values for KITTY   maybe use a bit little biass
+    # if robot:
+    th2 = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 71, -15)  # TODO values for ROBOT   this should be ok
+    #else:
+    # th2 = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 41, -35)  #TODO values for KITTY   maybe use a bit little biass
 
     if DEBUG:
         cv2.imshow("No erosion", th2)
@@ -266,8 +272,8 @@ def detect(img, negate=False, robot=False):
     #  x_values_left, y_values_left = find_median_line(th2, from_x=0, to_x=int((width/2)-1))
     #  x_values_right, y_values_right = find_median_line(th2, from_x=int(width/2), to_x=int(width-1))
 
-    x_values_left, y_values_left = find_median_line(th2, mask=left_mask)
-    x_values_right, y_values_right = find_median_line(th2, mask=right_mask)
+    x_values_left, y_values_left = find_median_line(th2, mask=left_mask, threshold=MEDIAN_LINE_THRESHOLD)
+    x_values_right, y_values_right = find_median_line(th2, mask=right_mask, threshold=MEDIAN_LINE_THRESHOLD)
 
     if DEBUG:
         for i in range(0, len(x_values_left)-1):
