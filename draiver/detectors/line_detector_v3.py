@@ -22,6 +22,8 @@ INTERSECTION_LINE = 150
 DEBUG = True
 PLOT = False
 
+MEDIAN_LINE_THRESHOLD = 30  #TODO  tested for robot
+
 def compute_hist(th2, pt1, pt2):
     """
     Compute the histogram for the portion of the image between the two points ( the current window )
@@ -77,8 +79,10 @@ def find_median_line(th2, from_x, to_x):
     y_values = []
     for i in range(0, th2.shape[0]-1):
         if i in res[:, 0]:
-            x_values.append(i)
-            y_values.append(from_x + np.median(res[res[:, 0] == i, 1]))
+            items = res[res[:, 0] == i, 1]
+            if len(items) > MEDIAN_LINE_THRESHOLD:
+                x_values.append(i)
+                y_values.append(from_x + np.median(items))
 
     return x_values, y_values
 
@@ -124,7 +128,7 @@ def update_mask_for_line(th2, line, mask, window_width, window_height, debug_img
             cv2.rectangle(debug_img, pt1, pt2, (0, 255, 0), thickness=3, lineType=cv2.LINE_8)
 
 
-def detect(img, negate=False):
+def detect(img, negate=False, robot=False):
     left = None
     right = None
 
@@ -142,10 +146,22 @@ def detect(img, negate=False):
         gray = abs(255 - gray)
 
     # V2 implementation use equalization of histogram
-    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-    gray = clahe.apply(gray)
+    # FIXME bad on robot
+    # clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+    # gray = clahe.apply(gray)
 
-    th2 = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 41, -35)  # maybe use a bit little biass
+    # Use adaptive thresholding because it is better for difficult lighting condition
+    if robot:
+        th2 = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 71, -15)  # TODO values for ROBOT   this should be ok
+    else:
+        th2 = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 41, -35)  #TODO values for KITTY   maybe use a bit little biass
+
+    if DEBUG:
+        cv2.imshow("No erosion", th2)
+        cv2.moveWindow("No erosion", 800, 600)
+    th2 = cv2.erode(th2, kernel=(7, 7, 1), iterations=3)  # TODO test
+
+    #th2 = cv2.threshold(gray, 0, 255, cv2.THRESH_OTSU)  #TODO values for KITTY   maybe use a bit little biass
 
     # ===============================  Calculate base histogram =============================
 
@@ -175,16 +191,16 @@ def detect(img, negate=False):
         right_line = right_max
 
     # # ======================= LEFT LINE
-    # if left_line is not None:
-    #     update_mask_for_line(th2, left_line, mask, WINDOW_WIDTH, WINDOW_HEIGHT, debug_img=img)
-    # else:
-    #     print("LEFT LINE NONE!!!")
-    #
+    if left_line is not None:
+        update_mask_for_line(th2, left_line, mask, WINDOW_WIDTH, WINDOW_HEIGHT, debug_img=img)
+    else:
+        print("LEFT LINE NONE!!!")
+
     # # ======================= RIGHT LINE
-    # if right_line is not None:
-    #     update_mask_for_line(th2, right_line, mask, WINDOW_WIDTH, WINDOW_HEIGHT, debug_img=img)
-    # else:
-    #     print("RIGHT LINE NONE!!!")
+    if right_line is not None:
+        update_mask_for_line(th2, right_line, mask, WINDOW_WIDTH, WINDOW_HEIGHT, debug_img=img)
+    else:
+        print("RIGHT LINE NONE!!!")
 
     # ================================ MASKING REGIONS ================================
 

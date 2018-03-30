@@ -52,7 +52,7 @@ def image_task():
         # Performs operations here
         bird = birdview.apply(decimg_left)
         # Line Detection
-        left, right = ld.detect(bird, negate=True)
+        left, right = ld.detect(bird, negate=True, robot=True)
 
         # ======================== PLOT ===========================
 

@@ -9,7 +9,7 @@ import sys, getopt
 
 def detect_lines(bird):
     # Line Detection
-    left, right = ld.detect(bird, negate=True)
+    left, right = ld.detect(bird, negate=True, robot=True)
 
     # ======================== PLOT ===========================
 
@@ -73,6 +73,7 @@ def main(camera_index):
 
     while key != ord('q'):
         _,frame = vc.read()
+        frame = cv2.medianBlur(frame, 3)
 
         bird = birdview.apply(frame)
 
