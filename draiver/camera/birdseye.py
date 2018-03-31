@@ -6,6 +6,7 @@ import time
 import draiver.camera.properties as cp
 import os
 
+BIRDVIEW_HEIGHT_OFFSET = 200
 
 def detect_camera_perspective_and_save(camera_index, perspective_file_path, external_camera):
     # Open Camera
@@ -38,7 +39,7 @@ def detect_camera_perspective_and_save(camera_index, perspective_file_path, exte
                     # dst = cv2.cornerHarris(thr, 6, 11, 0.04)
 
                     points = np.empty([4, 2], dtype=np.float32)
-
+                    height = height + BIRDVIEW_HEIGHT_OFFSET
                     if external_camera:
                         # Fixed coordinate for road view
                         destination_points = np.float32([
@@ -60,16 +61,16 @@ def detect_camera_perspective_and_save(camera_index, perspective_file_path, exte
                         #  Robot destination points
                         destination_points = np.float32([
                             [
-                                width / 3,
-                                height / 2,
+                                width / 4,
+                                0,
                             ], [
-                                width - (width / 3),
-                                height / 2
+                                width - (width / 4),
+                                0
                             ], [
-                                width / 3,
+                                width / 4,
                                 height# height - (height / 3)
                             ], [
-                                width - (width / 3),
+                                width - (width / 4),
                                 height# height - (height / 3)
                             ]
                         ])
@@ -136,7 +137,7 @@ class BirdsEye:
                 print("WARNING!!!! => Perspective camera information not ready.")
 
     def apply(self, img):
-        return cv2.warpPerspective(img, self.M, (self.width, self.height), borderMode=cv2.BORDER_CONSTANT, borderValue=(self.border_value, self.border_value, self.border_value))
+        return cv2.warpPerspective(img, self.M, (self.width, self.height + BIRDVIEW_HEIGHT_OFFSET), borderMode=cv2.BORDER_CONSTANT, borderValue=(self.border_value, self.border_value, self.border_value))
 
 
 

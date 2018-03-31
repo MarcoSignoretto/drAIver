@@ -33,6 +33,7 @@ class MotorController(Thread):
             left_speed, right_speed = self.calculate_steering(left, right, car_position)
             self.send_steering(left_speed, right_speed)
 
+
     def calculate_steering(self, left, right, car_position):
         range = right-left
         mid = left + range/2

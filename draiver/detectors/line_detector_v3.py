@@ -81,9 +81,11 @@ def find_median_line(th2, mask, threshold):
 
     x_values = []
     y_values = []
+
+    height_pixels = res[:, 0]
     for i in range(0, th2.shape[0]-1):
-        if i in res[:, 0]:
-            items = res[res[:, 0] == i, 1]
+        if i in height_pixels:
+            items = res[height_pixels == i, 1]
             items = [item for item in items if mask[i][item] == 255]
 
             if len(items) > threshold:
