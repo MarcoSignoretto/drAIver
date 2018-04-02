@@ -7,6 +7,7 @@ import time
 from threading import Thread
 from draiver.communication.motorprotocol import MotorProtocol
 import brickpi3
+from draiver.util.queue import SkipQueue
 
 
 FRAME_WIDTH = 640
@@ -17,6 +18,9 @@ OUTPUT_PORT = 10000
 INPUT_PORT = 10001
 
 COMMUNICATION_END = 0xFFFF
+
+
+global_sending_queue = SkipQueue(1)
 
 
 def recvall(sock, count):
@@ -30,7 +34,25 @@ def recvall(sock, count):
     return buf
 
 
-def image_task():
+def image_sending(sending_queue):
+    # socket init
+    server_address = (socket.gethostbyname("drAIver.local"), OUTPUT_PORT)
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.setblocking(1)
+    sock.bind(server_address)
+    sock.listen(True)
+    print("Image task waiting...")
+    conn, addr = sock.accept()
+    print("Image task connected")
+    conn.setblocking(1)
+    while True:
+        stringData_left = sending_queue.get()
+        # send chunk
+        conn.send(str(len(stringData_left)).ljust(16).encode())
+        conn.send(stringData_left)
+
+
+def image_task(sending_queue):
     sock = None
     conn = None
     vc = cv2.VideoCapture()
@@ -44,17 +66,6 @@ def image_task():
         print(vc.set(cv2.CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT))
         print(vc.set(cv2.CAP_PROP_FPS, FPS))
         time.sleep(1)  # without this camera setup failed
-
-
-        # socket init
-        server_address = (socket.gethostbyname("drAIver.local"), OUTPUT_PORT)
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.bind(server_address)
-        sock.listen(True)
-        print("Image task waiting...")
-        conn, addr = sock.accept()
-        print("Image task connected")
-
 
         while True:
 
@@ -72,8 +83,7 @@ def image_task():
                     stringData_left = data_left.tostring()
 
                     # send chunk
-                    conn.send(str(len(stringData_left)).ljust(16).encode())
-                    conn.send(stringData_left)
+                    sending_queue.put(stringData_left)
     except:
         print("Exception Image task")
     finally:
@@ -137,7 +147,10 @@ def main():
     motion_thread = Thread(target=motion_task)
     motion_thread.start()
 
-    image_thread = Thread(target=image_task)
+    sending_thread = Thread(target=image_sending, args=[global_sending_queue])
+    sending_thread.start()
+
+    image_thread = Thread(target=image_task, args=[global_sending_queue])
     image_thread.start()
 
 

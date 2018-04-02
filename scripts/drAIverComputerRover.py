@@ -4,6 +4,7 @@ import socket
 import cv2
 import numpy as np
 import keyboard
+from draiver.util.queue import SkipQueue
 from threading import Thread
 from draiver.communication.motorprotocol import MotorProtocol
 import time
@@ -22,6 +23,8 @@ SPEED = 20
 
 LINE_DETECTOR_NEGATE = True
 
+global_image_queue = SkipQueue(1)
+
 def recvall(sock, count):
 
     buf = b''
@@ -33,19 +36,30 @@ def recvall(sock, count):
     return buf
 
 
-def image_task():
+def collect_image_data(image_queue):
     print("Image Thread Started")
     # socket init
     server_address = (socket.gethostbyname("drAIver.local"), INPUT_PORT)
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.connect(server_address)
 
+    while True:
+        length_left = recvall(sock, 16)
+        stringData_left = recvall(sock, int(length_left))
+        image_queue.put(stringData_left)
+        print("Image arrived!!")
+
+    sock.close()
+
+
+def image_task(image_queue):
+
     birdview = BirdsEye(negate=True)
 
     key = ''
     while key != ord('q'):
-        length_left = recvall(sock, 16)
-        stringData_left = recvall(sock, int(length_left))
+        stringData_left = image_queue.get()
+        print("Received image")
         data_left = np.fromstring(stringData_left, dtype='uint8')
         decimg_left = cv2.imdecode(data_left, 1)
 
@@ -75,7 +89,6 @@ def image_task():
         key = cv2.waitKey(1) & 0xFF
 
     cv2.destroyAllWindows()
-    sock.close()
 
 
 def motion_task():
@@ -116,7 +129,7 @@ def motion_task():
 
         packet = mp.merge(left_packet, right_packet)
         sock.send(packet.to_bytes(MotorProtocol.COMMUNICATION_PACKET_SIZE, byteorder='big'))
-        time.sleep(0.3)
+        time.sleep(0.1)
 
     sock.close()
 
@@ -126,7 +139,10 @@ if __name__ == '__main__':
     motion_thread = Thread(target=motion_task)
     motion_thread.start()
 
-    image_task()
+    image_thread = Thread(target=collect_image_data, args=[global_image_queue])
+    image_thread.start()
+
+    image_task(global_image_queue)
 
 
 

@@ -6,57 +6,33 @@ from draiver.camera.birdseye import BirdsEye
 import draiver.camera.properties as cp
 import sys, getopt
 import draiver.motion.steering as st
+from draiver.util.queue import SkipQueue
+from threading import Thread
 
+queue = SkipQueue(1)
 
-def main(camera_index):
-    key = ''
+def capture_task(queue):
+
     vc = cv2.VideoCapture(camera_index)
     print(vc.set(cv2.CAP_PROP_FRAME_WIDTH, cp.FRAME_WIDTH))
     print(vc.set(cv2.CAP_PROP_FRAME_HEIGHT, cp.FRAME_HEIGHT))
     print(vc.set(cv2.CAP_PROP_FPS, cp.FPS))
 
+    while True:
+        _, frame = vc.read()
+        queue.put(frame)
+
+
+def image_task(queue):
+    key = ''
     width = cp.FRAME_WIDTH
     height = cp.FRAME_HEIGHT
-
-    # points = np.float32([
-    #     [
-    #         237,
-    #         292
-    #     ], [
-    #         440,
-    #         292
-    #     ], [
-    #         170,
-    #         478
-    #     ], [
-    #         480,
-    #         478
-    #     ]
-    # ])
-    # destination_points = np.float32([
-    #     [
-    #         width / cp.CHESSBOARD_ROW_CORNERS,
-    #         height / cp.CHESSBOARD_COL_CORNERS
-    #     ], [
-    #         width - (width / cp.CHESSBOARD_ROW_CORNERS),
-    #         height / cp.CHESSBOARD_COL_CORNERS
-    #     ], [
-    #         width / cp.CHESSBOARD_ROW_CORNERS,
-    #         height
-    #     ], [
-    #         width - (width / cp.CHESSBOARD_ROW_CORNERS),
-    #         height
-    #     ]
-    # ])
-    #
-    # M = cv2.getPerspectiveTransform(points, destination_points)
-    #
-    # birdview = BirdsEye(M=M, negate=True)
 
     birdview = BirdsEye(perspective_file_path="../../config/camera_perspective.npy", negate=True)
 
     while key != ord('q'):
-        _,frame = vc.read()
+        frame = queue.get()
+
         frame = cv2.medianBlur(frame, 3)
 
         bird = birdview.apply(frame)
@@ -89,8 +65,6 @@ def main(camera_index):
         if right_int is not None:
             cv2.circle(bird, (int(right_int), intercept), 1, (255, 0, 255), thickness=3)
 
-
-
         # ======================== CAR POSITION ===================
         car_position = int(bird.shape[1] / 2)
         steering_range = 500
@@ -108,16 +82,23 @@ def main(camera_index):
         if mid is not None:
             cv2.circle(bird, (int(mid), intercept), 1, (13, 128, 255), thickness=5)
 
-
-
         cv2.imshow("Frame", frame)
         cv2.moveWindow("Frame", 10, 10)
         cv2.imshow("Bird", bird)
-        cv2.moveWindow("Bird", 10+cp.FRAME_WIDTH, 10)
+        cv2.moveWindow("Bird", 10 + cp.FRAME_WIDTH, 10)
 
         key = cv2.waitKey(1) & 0xFF
 
     cv2.destroyAllWindows()
+
+
+def main(camera_index):
+
+    capture_thread = Thread(target=capture_task, args=[queue])
+    capture_thread.start()
+
+    image_task(queue)
+
 
 if __name__ == '__main__':
     camera_index = 0
