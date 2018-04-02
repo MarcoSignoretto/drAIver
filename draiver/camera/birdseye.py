@@ -61,16 +61,16 @@ def detect_camera_perspective_and_save(camera_index, perspective_file_path, exte
                         #  Robot destination points
                         destination_points = np.float32([
                             [
-                                width / 4,
+                                width / 3,
                                 0,
                             ], [
-                                width - (width / 4),
+                                width - (width / 3),
                                 0
                             ], [
-                                width / 4,
+                                width / 3,
                                 height# height - (height / 3)
                             ], [
-                                width - (width / 4),
+                                width - (width / 3),
                                 height# height - (height / 3)
                             ]
                         ])
