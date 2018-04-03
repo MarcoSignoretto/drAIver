@@ -137,7 +137,7 @@ class BirdsEye:
                 print("WARNING!!!! => Perspective camera information not ready.")
 
     def apply(self, img):
-        return cv2.warpPerspective(img, self.M, (self.width, self.height + BIRDVIEW_HEIGHT_OFFSET), borderMode=cv2.BORDER_CONSTANT, borderValue=(self.border_value, self.border_value, self.border_value))
+        return cv2.warpPerspective(img, self.M, (self.width, self.height + BIRDVIEW_HEIGHT_OFFSET), borderMode=cv2.BORDER_REPLICATE, borderValue=(self.border_value, self.border_value, self.border_value))
 
 
 

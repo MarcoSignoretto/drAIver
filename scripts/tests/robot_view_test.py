@@ -52,35 +52,9 @@ def image_task(queue):
                 y_fit = right[0] * (i ** 2) + right[1] * i + right[2]
                 cv2.circle(bird, (int(y_fit), i), 1, (0, 0, 255), thickness=1)
 
-        # ======================== CALCULATE INTERCEPT ===================
-
-        intercept = height - 100
-
-        left_int, right_int = st.find_intersection_points(left, right, intercept)
-
-        # Plot
-
-        if left_int is not None:
-            cv2.circle(bird, (int(left_int), intercept), 1, (255, 0, 255), thickness=3)
-        if right_int is not None:
-            cv2.circle(bird, (int(right_int), intercept), 1, (255, 0, 255), thickness=3)
-
-        # ======================== CAR POSITION ===================
-        car_position = int(bird.shape[1] / 2)
-        steering_range = 500
-        mid = None
-        if right_int is not None and left_int is not None:
-            steering_range = right_int - left_int
-            mid = left_int + steering_range / 2
-        elif left_int is not None:
-            mid = left_int + steering_range / 2
-        elif right_int is not None:
-            mid = right_int - steering_range / 2
-
-        # plot
-        cv2.circle(bird, (int(car_position), intercept), 1, (255, 0, 0), thickness=8)
-        if mid is not None:
-            cv2.circle(bird, (int(mid), intercept), 1, (13, 128, 255), thickness=5)
+        # ======================== CALCULATE STEERING ===================
+        left_speed, right_speed = st.calculate_steering(bird, left, right)
+        print(left_speed, right_speed)
 
         cv2.imshow("Frame", frame)
         cv2.moveWindow("Frame", 10, 10)
