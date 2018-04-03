@@ -33,8 +33,8 @@ VIDEO_FRAMES_5 = 1169
 if __name__ == '__main__':
     # Adaptive gaussian or mean ( gaussian is a bit better )
     # gaussian a difficoltà sul molto scuro
-    video_path = VIDEO_PATH_5
-    video_frames = VIDEO_FRAMES_5
+    video_path = VIDEO_PATH_1
+    video_frames = VIDEO_FRAMES_1
 
     for i in range(0, video_frames):
         file_name = format(i, '010d')
@@ -68,10 +68,10 @@ if __name__ == '__main__':
                 height / cp.CHESSBOARD_COL_CORNERS
             ], [
                 width / cp.CHESSBOARD_ROW_CORNERS,
-                height
+                height + 200
             ], [
                 width - (width / cp.CHESSBOARD_ROW_CORNERS),
-                height
+                height + 200
             ]
         ])
 

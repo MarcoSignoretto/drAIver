@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import thinning
 import math
 # import matplotlib.pyplot as plt TODO use when plot histograms and so on ( not works on robot )
 # from sklearn.cluster import KMeans
@@ -9,6 +10,7 @@ import math
 # from draiver.motion.motorcontroller import MotorController
 from draiver.camera.birdseye import BirdsEye
 import draiver.camera.properties as cp
+import time
 # from sklearn.preprocessing import normalize
 
 HEIGHT = 480
@@ -74,10 +76,10 @@ def find_median_line(th2, mask, threshold):
     :return: x_values and y_values WARNING y is function of x where x is related to the height of the image
     """
     res = np.transpose(np.nonzero(th2))
-    mask_res = np.transpose(np.nonzero(mask))
+    # mask_res = np.transpose(np.nonzero(mask))
     np.sum(mask, axis=1) # TODO continue from here
 
-    non_zero_indexes = np.nonzero(np.sum(mask, axis=1))
+    # non_zero_indexes = np.nonzero(np.sum(mask, axis=1))
 
     x_values = []
     y_values = []
@@ -88,7 +90,7 @@ def find_median_line(th2, mask, threshold):
             items = res[height_pixels == i, 1]
             items = [item for item in items if mask[i][item] == 255]
 
-            if len(items) > threshold:
+            if len(items) >= 1:
                 x_values.append(i)
                 y_values.append(np.median(items))
 
@@ -204,7 +206,7 @@ def detect(img, negate=False, robot=False):
     #th2 = cv2.threshold(gray, 0, 255, cv2.THRESH_OTSU)  #TODO values for KITTY   maybe use a bit little biass
 
     # ===============================  Calculate base histogram =============================
-
+    #hist_time_start = time.time()
     hist = compute_base_hist(th2)
     if PLOT:
         plt.plot(range(0, th2.shape[1]), hist)
@@ -214,8 +216,9 @@ def detect(img, negate=False, robot=False):
     half_width = (width/2)
     left_max = np.argpartition(hist[0:int(half_width-1)], -2)[-1:]
     right_max = np.argpartition(hist[int(half_width):int(width-1)], -2)[-1:] + int(half_width)
-
+    #hist_time_stop = time.time()
     print(left_max, right_max)
+    #print("Base Hist time:"+str(hist_time_stop-hist_time_start))
 
     # =============================== THRESHOLD ========================================
     LINE_THRESHOLD = 0.3
@@ -230,6 +233,7 @@ def detect(img, negate=False, robot=False):
     if hist[right_max].squeeze() >= LINE_THRESHOLD:
         right_line = right_max
 
+    #mask_time_start = time.time()
     # # ======================= LEFT LINE
     if left_line is not None:
         update_mask_for_line(th2, left_line, left_mask, WINDOW_WIDTH, WINDOW_HEIGHT, debug_img=img)
@@ -255,6 +259,8 @@ def detect(img, negate=False, robot=False):
     #     cv2.moveWindow("Mask", 200, 10)
     #
     th2 = cv2.bitwise_and(th2, mask)
+    # mask_time_end= time.time()
+    # print("Mask time:" + str(mask_time_end - mask_time_start))
 
     if DEBUG:
         cv2.imshow("th2m", th2)
@@ -269,20 +275,29 @@ def detect(img, negate=False, robot=False):
         cv2.moveWindow("mask", 1500, 700)
 
     # ================================ POLYNOMIAL FIT ================================
+    #thin_time_start = time.time()
+    th2 = thinning.guo_hall_thinning(th2) # TODO FIXME faster bat bad quality
+    #thin_time_stop = time.time()
+    #print("Thin time:" + str(thin_time_stop - thin_time_start))
+    cv2.imshow("Thinning", th2)
+    cv2.moveWindow("Adapt mean", 100, 100)
+
 
     # TODO FIX ME
     #  x_values_left, y_values_left = find_median_line(th2, from_x=0, to_x=int((width/2)-1))
     #  x_values_right, y_values_right = find_median_line(th2, from_x=int(width/2), to_x=int(width-1))
-
+    #median_time_start = time.time()
     x_values_left, y_values_left = find_median_line(th2, mask=left_mask, threshold=MEDIAN_LINE_THRESHOLD)
     x_values_right, y_values_right = find_median_line(th2, mask=right_mask, threshold=MEDIAN_LINE_THRESHOLD)
-
+    #median_time_stop = time.time()
+    #print("Median time:" + str(median_time_stop - median_time_start))
     if DEBUG:
         for i in range(0, len(x_values_left)-1):
             cv2.circle(img, (int(y_values_left[i]), int(x_values_left[i])), 1, (255, 0, 0), thickness=1)
         for i in range(0, len(x_values_right) - 1):
             cv2.circle(img, (int(y_values_right[i]), int(x_values_right[i])), 1, (255, 0, 0), thickness=1)
 
+    #fit_time_start = time.time()
     if len(x_values_left) > 10: # TODO fix custom threshold for realiable line
         left_fit = np.polyfit(x_values_left, y_values_left, 2)
         # TODO check residuals for quality
@@ -302,7 +317,8 @@ def detect(img, negate=False, robot=False):
             for i in range(0, img.shape[0] - 1):
                 y_fit = right_fit[0] * (i ** 2) + right_fit[1] * i + right_fit[2]
                 cv2.circle(img, (int(y_fit), i), 1, (0, 0, 255), thickness=1)
-
+    #fit_time_stop = time.time()
+    #print("Fit time:" + str(fit_time_stop - fit_time_start))
     if DEBUG:
         pass
         # cv2.circle(img, (int(np.round(left)), img.shape[0] - INTERSECTION_LINE), 5, (0, 0, 255), thickness=2)
@@ -494,10 +510,10 @@ if __name__ == '__main__':
                 height / cp.CHESSBOARD_COL_CORNERS
             ], [
                 width / cp.CHESSBOARD_ROW_CORNERS,
-                height
+                height + 200
             ], [
                 width - (width / cp.CHESSBOARD_ROW_CORNERS),
-                height
+                height + 200
             ]
         ])
 
