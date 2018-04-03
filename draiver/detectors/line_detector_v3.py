@@ -1,15 +1,15 @@
 import cv2
 import numpy as np
 import math
-import matplotlib.pyplot as plt
-from sklearn.cluster import KMeans
-from sklearn.cluster import DBSCAN
-from sklearn import metrics
-from sklearn.preprocessing import StandardScaler
-from draiver.motion.motorcontroller import MotorController
+# import matplotlib.pyplot as plt TODO use when plot histograms and so on ( not works on robot )
+# from sklearn.cluster import KMeans
+# from sklearn.cluster import DBSCAN
+# from sklearn import metrics
+# from sklearn.preprocessing import StandardScaler
+# from draiver.motion.motorcontroller import MotorController
 from draiver.camera.birdseye import BirdsEye
 import draiver.camera.properties as cp
-from sklearn.preprocessing import normalize
+# from sklearn.preprocessing import normalize
 
 HEIGHT = 480
 WIDTH = 640

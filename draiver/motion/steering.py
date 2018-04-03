@@ -30,11 +30,11 @@ def calculate_steering(bird_frame, left, right, horizon_line=100, steering_range
     left_int, right_int = find_intersection_points(left, right, intercept)
 
     # Plot
-
-    if left_int is not None:
-        cv2.circle(bird_frame, (int(left_int), intercept), 1, (255, 0, 255), thickness=3)
-    if right_int is not None:
-        cv2.circle(bird_frame, (int(right_int), intercept), 1, (255, 0, 255), thickness=3)
+    if DEBUG:
+        if left_int is not None:
+            cv2.circle(bird_frame, (int(left_int), intercept), 1, (255, 0, 255), thickness=3)
+        if right_int is not None:
+            cv2.circle(bird_frame, (int(right_int), intercept), 1, (255, 0, 255), thickness=3)
 
     # ======================== CAR POSITION ===================
     car_position = int(bird_frame.shape[1] / 2)
@@ -51,11 +51,12 @@ def calculate_steering(bird_frame, left, right, horizon_line=100, steering_range
 
 
     # plot
-    cv2.circle(bird_frame, (int(car_position), intercept), 1, (255, 0, 0), thickness=8)
-    if mid is not None:
-        cv2.circle(bird_frame, (int(mid), intercept), 1, (13, 128, 255), thickness=5)
-    else:
-        print("MID not found!!")
+    if DEBUG:
+        cv2.circle(bird_frame, (int(car_position), intercept), 1, (255, 0, 0), thickness=8)
+        if mid is not None:
+            cv2.circle(bird_frame, (int(mid), intercept), 1, (13, 128, 255), thickness=5)
+        else:
+            print("MID not found!!")
 
     # ======================= CALCULATE STEERING ==============
 
