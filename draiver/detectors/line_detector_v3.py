@@ -246,8 +246,9 @@ def detect(img, negate=False, robot=False):
     else:
         print("RIGHT LINE NONE!!!")
 
-    cv2.imshow("th2m", th2)
-    cv2.moveWindow("th2m", 10, 700)
+    if DEBUG:
+        cv2.imshow("th2m", th2)
+        cv2.moveWindow("th2m", 10, 700)
 
     # ================================ MASKING REGIONS ================================
 
@@ -279,8 +280,9 @@ def detect(img, negate=False, robot=False):
     # th2 = thinning.guo_hall_thinning(th2) # TODO FIXME faster bat bad quality
     #thin_time_stop = time.time()
     #print("Thin time:" + str(thin_time_stop - thin_time_start))
-    cv2.imshow("Thinning", th2)
-    cv2.moveWindow("Adapt mean", 100, 100)
+    if DEBUG:
+        cv2.imshow("Thinning", th2)
+        cv2.moveWindow("Adapt mean", 100, 100)
 
 
     # TODO FIX ME
@@ -343,9 +345,9 @@ def detect(img, negate=False, robot=False):
         # cv2.imshow("Adapt gaussian erosion", th3erosion)
         # cv2.imshow("erosion", erosion)
 
-    cv2.imshow("Adapt mean", th2)
-    cv2.moveWindow("Adapt mean", 1500, 100)
-    cv2.waitKey(1)
+        cv2.imshow("Adapt mean", th2)
+        cv2.moveWindow("Adapt mean", 1500, 100)
+        cv2.waitKey(1)
 
     return left, right
 
