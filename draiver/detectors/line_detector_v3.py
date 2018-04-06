@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-import thinning
+# import thinning TODO fix
 import math
 # import matplotlib.pyplot as plt TODO use when plot histograms and so on ( not works on robot )
 # from sklearn.cluster import KMeans
@@ -276,7 +276,7 @@ def detect(img, negate=False, robot=False):
 
     # ================================ POLYNOMIAL FIT ================================
     #thin_time_start = time.time()
-    th2 = thinning.guo_hall_thinning(th2) # TODO FIXME faster bat bad quality
+    # th2 = thinning.guo_hall_thinning(th2) # TODO FIXME faster bat bad quality
     #thin_time_stop = time.time()
     #print("Thin time:" + str(thin_time_stop - thin_time_start))
     cv2.imshow("Thinning", th2)
