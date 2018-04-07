@@ -8,6 +8,7 @@ from threading import Thread
 from draiver.communication.motorprotocol import MotorProtocol
 import brickpi3
 from draiver.util.queue import SkipQueue
+from queue import Empty
 
 
 FRAME_WIDTH = 640
@@ -21,6 +22,7 @@ COMMUNICATION_END = 0xFFFF
 
 
 global_sending_queue = SkipQueue(1)
+global_motion_queue = SkipQueue(1)
 
 
 def recvall(sock, count):
@@ -96,12 +98,12 @@ def image_task(sending_queue):
             vc.release()
 
 
-def motion_task():
-    BP = None
+def collect_motion_data():
+
     sock = None
     conn = None
     try:
-        print("Motion Thread Started")
+        print("Motion Thread Receiver Started")
         # socket init
         server_address = (socket.gethostbyname("drAIver.local"), INPUT_PORT)
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -111,8 +113,6 @@ def motion_task():
         conn, addr = sock.accept()
         print("Motion task connected")
 
-        BP = brickpi3.BrickPi3()
-
         mp = MotorProtocol()
 
         packet = int.from_bytes(recvall(conn, MotorProtocol.COMMUNICATION_PACKET_SIZE), byteorder='big') & MotorProtocol.COMMUNICATION_MASK
@@ -121,18 +121,13 @@ def motion_task():
             print(packet)
 
             left_speed, right_speed = mp.split(packet)
+            global_motion_queue.put((left_speed, right_speed))
 
-            print("LEFT: "+str(left_speed))
-            print("RIGHT: "+str(right_speed))
 
-            BP.set_motor_power(BP.PORT_D, left_speed)
-            BP.set_motor_power(BP.PORT_A, right_speed)
 
     except:
         print("Exception motion task")
     finally:
-        if BP is not None:
-            BP.reset_all()
         if conn is not None:
             conn.close()
         if sock is not None:
@@ -141,8 +136,36 @@ def motion_task():
 
     # TODO complete
 
+def motion_task():
+    BP = None
+    try:
+        print("Motion Thread Started")
+        BP = brickpi3.BrickPi3()
+
+        while True:
+            left_speed = 0
+            right_speed = 0
+            try:
+                left_speed, right_speed = global_motion_queue.get(timeout=0.2)
+            except Empty:
+                pass
+            finally:
+                print("LEFT: " + str(left_speed))
+                print("RIGHT: " + str(right_speed))
+                BP.set_motor_power(BP.PORT_D, left_speed)
+                BP.set_motor_power(BP.PORT_A, right_speed)
+
+    except:
+        print("Exception motion task")
+    finally:
+        if BP is not None:
+            BP.reset_all()
+
 
 def main():
+
+    motion_data_thread = Thread(target=collect_motion_data)
+    motion_data_thread.start()
 
     motion_thread = Thread(target=motion_task)
     motion_thread.start()
