@@ -152,6 +152,7 @@ def local_motion_task(motion_queue):
 
     while True:
         decimg_left = motion_queue.get()
+        print("received")
         frame = cv2.medianBlur(decimg_left, 3)
 
         bird = birdview.apply(frame)
