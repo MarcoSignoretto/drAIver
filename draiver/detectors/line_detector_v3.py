@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import thinning # TODO fix
 import math
-# import matplotlib.pyplot as plt TODO use when plot histograms and so on ( not works on robot )
+import matplotlib.pyplot as plt # TODO use when plot histograms and so on ( not works on robot )
 # from sklearn.cluster import KMeans
 # from sklearn.cluster import DBSCAN
 # from sklearn import metrics
@@ -216,6 +216,7 @@ def detect(img, negate=False, robot=False):
     half_width = (width/2)
     left_max = np.argpartition(hist[0:int(half_width-1)], -2)[-1:]
     right_max = np.argpartition(hist[int(half_width):int(width-1)], -2)[-1:] + int(half_width)
+
     #hist_time_stop = time.time()
     print(left_max, right_max)
     #print("Base Hist time:"+str(hist_time_stop-hist_time_start))
@@ -226,12 +227,19 @@ def detect(img, negate=False, robot=False):
     right_line = None
 
     WINDOW_WIDTH = 100
-    WINDOW_HEIGHT = height / 6
+    WINDOW_HEIGHT = height / 12
 
     if hist[left_max].squeeze() >= LINE_THRESHOLD:
         left_line = left_max
     if hist[right_max].squeeze() >= LINE_THRESHOLD:
         right_line = right_max
+
+    if left_line is not None and right_line is not None and right_line-left_line < 200: # TODO search better method
+        if hist[left_line] > hist[right_line]:
+            right_line = None
+        else:
+            left_line = None
+
 
     #mask_time_start = time.time()
     # # ======================= LEFT LINE
@@ -349,7 +357,11 @@ def detect(img, negate=False, robot=False):
         cv2.moveWindow("Adapt mean", 1500, 100)
         cv2.waitKey(1)
 
+    print(left)
+    print(right)
+
     return left, right
+
 
 # TODO remove
 def test_color_space():

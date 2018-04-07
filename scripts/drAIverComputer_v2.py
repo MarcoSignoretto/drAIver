@@ -23,9 +23,9 @@ SPEED = 50
 
 LINE_DETECTOR_NEGATE = True
 
-
 global_image_queue = SkipQueue(1)
 global_motion_queue = SkipQueue(1)
+
 
 def recvall(sock, count):
 
@@ -38,7 +38,7 @@ def recvall(sock, count):
     return buf
 
 
-def collect_image_data(image_queue):
+def collect_image_data():
     print("Image Thread Started")
     # socket init
     server_address = (socket.gethostbyname("drAIver.local"), INPUT_PORT)
@@ -48,34 +48,32 @@ def collect_image_data(image_queue):
     while True:
         length_left = recvall(sock, 16)
         stringData_left = recvall(sock, int(length_left))
-        image_queue.put(stringData_left)
+        data_left = np.fromstring(stringData_left, dtype='uint8')
+        decimg_left = cv2.imdecode(data_left, 1)
+
+        global_image_queue.put(decimg_left)
         print("Image arrived!!")
 
     sock.close()
 
 
-def image_task(image_queue, motion_queue):
+def image_task():
 
     birdview = BirdsEye(negate=True)
 
-    key = ''
-    while key != ord('q'):
-        stringData_left = image_queue.get()
+    while True:
+        frame = global_image_queue.get()
         print("Received image")
-        data_left = np.fromstring(stringData_left, dtype='uint8')
-        decimg_left = cv2.imdecode(data_left, 1)
 
-
-        frame = cv2.medianBlur(decimg_left, 3)
+        frame = cv2.medianBlur(frame, 3)
 
         bird = birdview.apply(frame)
 
         left, right = ld.detect(bird, negate=True, robot=True)
-        car_position = int(bird.shape[1] / 2)
 
-        left_speed, right_speed = st.calculate_steering(left, right, car_position)
+        left_speed, right_speed = st.calculate_steering(bird, left, right)
 
-        motion_queue.put((left_speed, right_speed))
+        global_motion_queue.put((left_speed, right_speed))
 
         # ======================== PLOT ===========================
 
@@ -90,7 +88,7 @@ def image_task(image_queue, motion_queue):
                 cv2.circle(bird, (int(y_fit), i), 1, (0, 0, 255), thickness=1)
 
 
-        cv2.imshow('CLIENT_LEFT', decimg_left)
+        cv2.imshow('CLIENT_LEFT', frame)
         cv2.moveWindow('CLIENT_LEFT', 10, 10)
 
         cv2.imshow('BIRD', bird)
@@ -100,7 +98,7 @@ def image_task(image_queue, motion_queue):
     cv2.destroyAllWindows()
 
 
-def motion_task(motion_queue):
+def motion_task():
     print("Motion Thread Started")
     # socket init
     server_address = (socket.gethostbyname("drAIver.local"), OUTPUT_PORT)
@@ -112,7 +110,7 @@ def motion_task(motion_queue):
 
     while True:
 
-        left_speed, right_speed = motion_queue.get()
+        left_speed, right_speed = global_motion_queue.get()
 
         left_packet = mp.pack(left_speed)
         right_packet = mp.pack(right_speed)
@@ -126,13 +124,13 @@ def motion_task(motion_queue):
 
 if __name__ == '__main__':
 
-    motion_thread = Thread(target=motion_task, args=[global_motion_queue])
+    motion_thread = Thread(target=motion_task)
     motion_thread.start()
 
-    image_thread = Thread(target=collect_image_data, args=[global_image_queue])
+    image_thread = Thread(target=collect_image_data)
     image_thread.start()
 
-    image_task(global_image_queue, global_motion_queue)
+    image_task()
 
 
 
