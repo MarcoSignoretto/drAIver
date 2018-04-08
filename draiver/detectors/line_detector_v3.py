@@ -1,26 +1,32 @@
 import cv2
 import numpy as np
+import thinning # TODO fix
 import math
-import matplotlib.pyplot as plt
-from sklearn.cluster import KMeans
-from sklearn.cluster import DBSCAN
-from sklearn import metrics
-from sklearn.preprocessing import StandardScaler
-from draiver.motion.motorcontroller import MotorController
+import matplotlib.pyplot as plt # TODO use when plot histograms and so on ( not works on robot )
+# from sklearn.cluster import KMeans
+# from sklearn.cluster import DBSCAN
+# from sklearn import metrics
+# from sklearn.preprocessing import StandardScaler
+# from draiver.motion.motorcontroller import MotorController
 from draiver.camera.birdseye import BirdsEye
 import draiver.camera.properties as cp
-from sklearn.preprocessing import normalize
+import time
+# from sklearn.preprocessing import normalize
 
 HEIGHT = 480
 WIDTH = 640
 
-# BASE_PATH = "/mnt/B01EEC811EEC41C8/" # Ubuntu Config
-BASE_PATH = "/Users/marco/Documents/" # Mac Config
+BASE_PATH = "/mnt/B01EEC811EEC41C8/" # Ubuntu Config
+# BASE_PATH = "/Users/marco/Documents/" # Mac Config
 
 INTERSECTION_LINE = 150
 
 DEBUG = False
 PLOT = False
+
+
+WINDOW_LINE_THRESHOLD = 10
+#  WINDOW_LINE_THRESHOLD = 5
 
 def compute_hist(th2, pt1, pt2):
     """
@@ -55,7 +61,7 @@ def compute_window_line(hist, origin_x):
     :return: the starting point of the line if there are enough evidence
     """
     line = None
-    WINDOW_LINE_THRESHOLD = 10  # TODO fix with better value
+      # TODO fix with better value
     max = np.argpartition(hist, -2)[-1:]
 
     if hist[max].squeeze() >= WINDOW_LINE_THRESHOLD:
@@ -63,7 +69,34 @@ def compute_window_line(hist, origin_x):
 
     return line
 
-def find_median_line(th2, from_x, to_x):
+def find_median_line(th2, mask, threshold):
+    """
+
+    :param th2: binary thresholded image used to compute the median line
+    :return: x_values and y_values WARNING y is function of x where x is related to the height of the image
+    """
+    res = np.transpose(np.nonzero(th2))
+    # mask_res = np.transpose(np.nonzero(mask))
+    np.sum(mask, axis=1) # TODO continue from here
+
+    # non_zero_indexes = np.nonzero(np.sum(mask, axis=1))
+
+    x_values = []
+    y_values = []
+
+    height_pixels = res[:, 0]
+    for i in range(0, th2.shape[0]-1):
+        if i in height_pixels:
+            items = res[height_pixels == i, 1]
+            items = [item for item in items if mask[i][item] == 255]
+
+            if len(items) >= 1:
+                x_values.append(i)
+                y_values.append(np.median(items))
+
+    return x_values, y_values
+
+def find_median_line_old(th2, from_x, to_x):
     """
 
     :param th2: binary thresholded image used to compute the median line
@@ -77,8 +110,10 @@ def find_median_line(th2, from_x, to_x):
     y_values = []
     for i in range(0, th2.shape[0]-1):
         if i in res[:, 0]:
-            x_values.append(i)
-            y_values.append(from_x + np.median(res[res[:, 0] == i, 1]))
+            items = res[res[:, 0] == i, 1]
+            if len(items) > MEDIAN_LINE_THRESHOLD:
+                x_values.append(i)
+                y_values.append(from_x + np.median(items))
 
     return x_values, y_values
 
@@ -107,8 +142,11 @@ def update_mask_for_line(th2, line, mask, window_width, window_height, debug_img
     w_y = height
     while w_y >= window_height:
 
-        pt1 = (int(line_prev - margin), int(w_y - window_height))
-        pt2 = (int(line_prev + margin), int(w_y))
+        origin_x = int(max(line_prev - margin, 0))
+        end_x = int(min(line_prev + margin, th2.shape[1]))
+
+        pt1 = (origin_x, int(w_y - window_height))
+        pt2 = (end_x, int(w_y))
         mask[pt1[1]:pt2[1], pt1[0]:pt2[0]] = 255
 
         w_hist, w_origin = compute_hist(th2, pt1, pt2)
@@ -124,7 +162,13 @@ def update_mask_for_line(th2, line, mask, window_width, window_height, debug_img
             cv2.rectangle(debug_img, pt1, pt2, (0, 255, 0), thickness=3, lineType=cv2.LINE_8)
 
 
-def detect(img, negate=False):
+def detect(img, negate=False, robot=False):
+
+    if robot:
+        MEDIAN_LINE_THRESHOLD = 30  # Robot
+    else:
+        MEDIAN_LINE_THRESHOLD = 10  # Kitty
+
     left = None
     right = None
 
@@ -132,6 +176,8 @@ def detect(img, negate=False):
     height = img.shape[0]
 
     mask = np.zeros((img.shape[0], img.shape[1]), dtype=np.uint8)
+    left_mask = np.zeros((img.shape[0], img.shape[1]), dtype=np.uint8)
+    right_mask = np.zeros((img.shape[0], img.shape[1]), dtype=np.uint8)
 
     if not negate:
         gray = np.zeros((height, width, 1), dtype=np.uint8)
@@ -142,13 +188,25 @@ def detect(img, negate=False):
         gray = abs(255 - gray)
 
     # V2 implementation use equalization of histogram
-    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-    gray = clahe.apply(gray)
+    # FIXME bad on robot
+    # clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+    # gray = clahe.apply(gray)
 
-    th2 = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 41, -35)  # maybe use a bit little biass
+    # Use adaptive thresholding because it is better for difficult lighting condition
+    # if robot:
+    th2 = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 71, -15)  # TODO values for ROBOT   this should be ok
+    #else:
+    # th2 = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 41, -35)  #TODO values for KITTY   maybe use a bit little biass
+
+    if DEBUG:
+        cv2.imshow("No erosion", th2)
+        cv2.moveWindow("No erosion", 800, 600)
+    th2 = cv2.erode(th2, kernel=(7, 7, 1), iterations=3)  # TODO test
+
+    #th2 = cv2.threshold(gray, 0, 255, cv2.THRESH_OTSU)  #TODO values for KITTY   maybe use a bit little biass
 
     # ===============================  Calculate base histogram =============================
-
+    #hist_time_start = time.time()
     hist = compute_base_hist(th2)
     if PLOT:
         plt.plot(range(0, th2.shape[1]), hist)
@@ -159,7 +217,9 @@ def detect(img, negate=False):
     left_max = np.argpartition(hist[0:int(half_width-1)], -2)[-1:]
     right_max = np.argpartition(hist[int(half_width):int(width-1)], -2)[-1:] + int(half_width)
 
+    #hist_time_stop = time.time()
     print(left_max, right_max)
+    #print("Base Hist time:"+str(hist_time_stop-hist_time_start))
 
     # =============================== THRESHOLD ========================================
     LINE_THRESHOLD = 0.3
@@ -167,48 +227,87 @@ def detect(img, negate=False):
     right_line = None
 
     WINDOW_WIDTH = 100
-    WINDOW_HEIGHT = height / 6
+    WINDOW_HEIGHT = height / 12
 
     if hist[left_max].squeeze() >= LINE_THRESHOLD:
         left_line = left_max
     if hist[right_max].squeeze() >= LINE_THRESHOLD:
         right_line = right_max
 
-    # ======================= LEFT LINE
+    if left_line is not None and right_line is not None and right_line-left_line < 200: # TODO search better method
+        if hist[left_line] > hist[right_line]:
+            right_line = None
+        else:
+            left_line = None
+
+
+    #mask_time_start = time.time()
+    # # ======================= LEFT LINE
     if left_line is not None:
-        update_mask_for_line(th2, left_line, mask, WINDOW_WIDTH, WINDOW_HEIGHT, debug_img=img)
+        update_mask_for_line(th2, left_line, left_mask, WINDOW_WIDTH, WINDOW_HEIGHT, debug_img=img)
     else:
         print("LEFT LINE NONE!!!")
 
-    # ======================= RIGHT LINE
+    # # ======================= RIGHT LINE
     if right_line is not None:
-        update_mask_for_line(th2, right_line, mask, WINDOW_WIDTH, WINDOW_HEIGHT, debug_img=img)
+        update_mask_for_line(th2, right_line, right_mask, WINDOW_WIDTH, WINDOW_HEIGHT, debug_img=img)
     else:
         print("RIGHT LINE NONE!!!")
-
-    # ================================ MASKING REGIONS ================================
-
-    if DEBUG:
-        cv2.imshow("Mask", mask)
-        cv2.moveWindow("Mask", 200, 10)
-
-    th2 = cv2.bitwise_and(th2, mask)
 
     if DEBUG:
         cv2.imshow("th2m", th2)
         cv2.moveWindow("th2m", 10, 700)
 
+    # ================================ MASKING REGIONS ================================
+
+    mask = cv2.bitwise_or(mask, left_mask)
+    mask = cv2.bitwise_or(mask, right_mask)
+
+    # if DEBUG:
+    #     cv2.imshow("Mask", mask)
+    #     cv2.moveWindow("Mask", 200, 10)
+    #
+    th2 = cv2.bitwise_and(th2, mask)
+    # mask_time_end= time.time()
+    # print("Mask time:" + str(mask_time_end - mask_time_start))
+
+    if DEBUG:
+        cv2.imshow("th2m", th2)
+        cv2.moveWindow("th2m", 10, 700)
+
+        cv2.imshow("left_mask", left_mask)
+        cv2.moveWindow("left_mask", 10, 700)
+        cv2.imshow("right_mask", right_mask)
+        cv2.moveWindow("right_mask", 650, 700)
+
+        cv2.imshow("mask", mask)
+        cv2.moveWindow("mask", 1500, 700)
+
     # ================================ POLYNOMIAL FIT ================================
+    #thin_time_start = time.time()
+    th2 = thinning.guo_hall_thinning(th2) # TODO FIXME faster bat bad quality
+    #thin_time_stop = time.time()
+    #print("Thin time:" + str(thin_time_stop - thin_time_start))
+    if DEBUG:
+        cv2.imshow("Thinning", th2)
+        cv2.moveWindow("Adapt mean", 100, 100)
 
-    x_values_left, y_values_left = find_median_line(th2, from_x=0, to_x=int((width/2)-1))
-    x_values_right, y_values_right = find_median_line(th2, from_x=int(width/2), to_x=int(width-1))
 
+    # TODO FIX ME
+    #  x_values_left, y_values_left = find_median_line(th2, from_x=0, to_x=int((width/2)-1))
+    #  x_values_right, y_values_right = find_median_line(th2, from_x=int(width/2), to_x=int(width-1))
+    #median_time_start = time.time()
+    x_values_left, y_values_left = find_median_line(th2, mask=left_mask, threshold=MEDIAN_LINE_THRESHOLD)
+    x_values_right, y_values_right = find_median_line(th2, mask=right_mask, threshold=MEDIAN_LINE_THRESHOLD)
+    #median_time_stop = time.time()
+    #print("Median time:" + str(median_time_stop - median_time_start))
     if DEBUG:
         for i in range(0, len(x_values_left)-1):
             cv2.circle(img, (int(y_values_left[i]), int(x_values_left[i])), 1, (255, 0, 0), thickness=1)
         for i in range(0, len(x_values_right) - 1):
             cv2.circle(img, (int(y_values_right[i]), int(x_values_right[i])), 1, (255, 0, 0), thickness=1)
 
+    #fit_time_start = time.time()
     if len(x_values_left) > 10: # TODO fix custom threshold for realiable line
         left_fit = np.polyfit(x_values_left, y_values_left, 2)
         # TODO check residuals for quality
@@ -228,8 +327,10 @@ def detect(img, negate=False):
             for i in range(0, img.shape[0] - 1):
                 y_fit = right_fit[0] * (i ** 2) + right_fit[1] * i + right_fit[2]
                 cv2.circle(img, (int(y_fit), i), 1, (0, 0, 255), thickness=1)
-
+    #fit_time_stop = time.time()
+    #print("Fit time:" + str(fit_time_stop - fit_time_start))
     if DEBUG:
+        pass
         # cv2.circle(img, (int(np.round(left)), img.shape[0] - INTERSECTION_LINE), 5, (0, 0, 255), thickness=2)
         # cv2.circle(img, (int(np.round(right)), img.shape[0] - INTERSECTION_LINE), 5, (0, 0, 255), thickness=2)
         #
@@ -244,9 +345,7 @@ def detect(img, negate=False):
         # #cv2.imshow("Gray", gray)
         # cv2.imshow("Otzu", thr)
 
-        cv2.imshow("Adapt mean", th2)
-        cv2.moveWindow("Adapt mean", 1500, 100)
-        #cv2.imshow("Img", img)
+        # cv2.imshow("Img", img)
         # cv2.imshow("Adapt gaussian", th3)
         # cv2.imshow("Canny", edges)
         # cv2.imshow("CannyDilated", dilate)
@@ -254,9 +353,15 @@ def detect(img, negate=False):
         # cv2.imshow("Adapt gaussian erosion", th3erosion)
         # cv2.imshow("erosion", erosion)
 
+        cv2.imshow("Adapt mean", th2)
+        cv2.moveWindow("Adapt mean", 1500, 100)
         cv2.waitKey(1)
 
+    print(left)
+    print(right)
+
     return left, right
+
 
 # TODO remove
 def test_color_space():
@@ -419,10 +524,10 @@ if __name__ == '__main__':
                 height / cp.CHESSBOARD_COL_CORNERS
             ], [
                 width / cp.CHESSBOARD_ROW_CORNERS,
-                height
+                height + 200
             ], [
                 width - (width / cp.CHESSBOARD_ROW_CORNERS),
-                height
+                height + 200
             ]
         ])
 

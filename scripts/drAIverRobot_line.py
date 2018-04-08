@@ -8,7 +8,9 @@ from threading import Thread
 from draiver.communication.motorprotocol import MotorProtocol
 import brickpi3
 from draiver.util.queue import SkipQueue
-from queue import Empty
+from draiver.camera.birdseye import BirdsEye
+import draiver.detectors.line_detector_v3 as ld
+import draiver.motion.steering as st
 
 
 FRAME_WIDTH = 640
@@ -48,13 +50,22 @@ def image_sending(sending_queue):
     print("Image task connected")
     conn.setblocking(1)
     while True:
-        stringData_left = sending_queue.get()
+        frame_left = sending_queue.get()
+
+        encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 100]
+        # =========== LEFT IMAGE ============
+        result_left, imgencode_left = cv2.imencode('.jpg', frame_left, encode_param)
+
+        # transform image in np.array
+        data_left = np.array(imgencode_left)
+        stringData_left = data_left.tostring()
+
         # send chunk
         conn.send(str(len(stringData_left)).ljust(16).encode())
         conn.send(stringData_left)
 
 
-def image_task(sending_queue):
+def image_task(sending_queue, motion_queue):
     sock = None
     conn = None
     vc = cv2.VideoCapture()
@@ -75,17 +86,10 @@ def image_task(sending_queue):
 
                 ret_left, frame_left = vc.read()
                 if ret_left:
-                    # encodind frma in JPEG format to obtain better transmission speed
-                    encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 100]
-                    # =========== LEFT IMAGE ============
-                    result_left, imgencode_left = cv2.imencode('.jpg', frame_left, encode_param)
-
-                    # transform image in np.array
-                    data_left = np.array(imgencode_left)
-                    stringData_left = data_left.tostring()
 
                     # send chunk
-                    sending_queue.put(stringData_left)
+                    motion_queue.put(frame_left)
+                    sending_queue.put(frame_left)
     except:
         print("Exception Image task")
     finally:
@@ -98,12 +102,12 @@ def image_task(sending_queue):
             vc.release()
 
 
-def collect_motion_data():
-
+def motion_task():
+    BP = None
     sock = None
     conn = None
     try:
-        print("Motion Thread Receiver Started")
+        print("Motion Thread Started")
         # socket init
         server_address = (socket.gethostbyname("drAIver.local"), INPUT_PORT)
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -113,6 +117,8 @@ def collect_motion_data():
         conn, addr = sock.accept()
         print("Motion task connected")
 
+        BP = brickpi3.BrickPi3()
+
         mp = MotorProtocol()
 
         packet = int.from_bytes(recvall(conn, MotorProtocol.COMMUNICATION_PACKET_SIZE), byteorder='big') & MotorProtocol.COMMUNICATION_MASK
@@ -121,59 +127,57 @@ def collect_motion_data():
             print(packet)
 
             left_speed, right_speed = mp.split(packet)
-            global_motion_queue.put((left_speed, right_speed))
 
+            print("LEFT: "+str(left_speed))
+            print("RIGHT: "+str(right_speed))
 
-
-    except:
-        print("Exception motion task")
-    finally:
-        if conn is not None:
-            conn.close()
-        if sock is not None:
-            sock.close()
-
-
-    # TODO complete
-
-def motion_task():
-    BP = None
-    try:
-        print("Motion Thread Started")
-        BP = brickpi3.BrickPi3()
-
-        while True:
-            left_speed = 0
-            right_speed = 0
-            try:
-                left_speed, right_speed = global_motion_queue.get(timeout=0.2)
-            except Empty:
-                pass
-            finally:
-                print("LEFT: " + str(left_speed))
-                print("RIGHT: " + str(right_speed))
-                BP.set_motor_power(BP.PORT_D, left_speed)
-                BP.set_motor_power(BP.PORT_A, right_speed)
+            BP.set_motor_power(BP.PORT_D, left_speed)
+            BP.set_motor_power(BP.PORT_A, right_speed)
 
     except:
         print("Exception motion task")
     finally:
         if BP is not None:
             BP.reset_all()
+        if conn is not None:
+            conn.close()
+        if sock is not None:
+            sock.close()
+
+
+def local_motion_task(motion_queue):
+
+    birdview = BirdsEye(negate=True)
+    BP = brickpi3.BrickPi3()
+
+    while True:
+        decimg_left = motion_queue.get()
+        print("received")
+        frame = cv2.medianBlur(decimg_left, 3)
+
+        bird = birdview.apply(frame)
+
+        left, right = ld.detect(bird, negate=True, robot=True)
+        car_position = int(bird.shape[1] / 2)
+
+        left_speed, right_speed = st.calculate_steering(left, right, car_position)
+
+        BP.set_motor_power(BP.PORT_D, left_speed)
+        BP.set_motor_power(BP.PORT_A, right_speed)
 
 
 def main():
 
-    motion_data_thread = Thread(target=collect_motion_data)
-    motion_data_thread.start()
+    #motion_thread = Thread(target=motion_task)
+    #motion_thread.start()
 
-    motion_thread = Thread(target=motion_task)
+    motion_thread = Thread(target=local_motion_task, args=[global_motion_queue])
     motion_thread.start()
 
     sending_thread = Thread(target=image_sending, args=[global_sending_queue])
     sending_thread.start()
 
-    image_thread = Thread(target=image_task, args=[global_sending_queue])
+    image_thread = Thread(target=image_task, args=[global_sending_queue, global_motion_queue])
     image_thread.start()
 
 

@@ -3,14 +3,14 @@
 import socket
 import cv2
 import numpy as np
-import keyboard
+from draiver.motion.motorcontroller import MotorController
+from draiver.communication.motorprotocol import MotorProtocol
+import draiver.detectors.line_detector_v3 as ld
 from draiver.util.queue import SkipQueue
 from threading import Thread
-from draiver.communication.motorprotocol import MotorProtocol
-import time
 from draiver.camera.birdseye import BirdsEye
-import draiver.detectors.line_detector_v3 as ld
-import draiver.camera.properties as cp
+import draiver.motion.steering as st
+import time
 
 OUTPUT_PORT = 10001
 INPUT_PORT = 10000
@@ -19,11 +19,13 @@ FRAME_WIDTH = 640
 FRAME_HEIGHT = 480
 FPS = 30
 
-SPEED = 20
+SPEED = 50
 
 LINE_DETECTOR_NEGATE = True
 
 global_image_queue = SkipQueue(1)
+global_motion_queue = SkipQueue(1)
+
 
 def recvall(sock, count):
 
@@ -36,7 +38,7 @@ def recvall(sock, count):
     return buf
 
 
-def collect_image_data(image_queue):
+def collect_image_data():
     print("Image Thread Started")
     # socket init
     server_address = (socket.gethostbyname("drAIver.local"), INPUT_PORT)
@@ -46,27 +48,32 @@ def collect_image_data(image_queue):
     while True:
         length_left = recvall(sock, 16)
         stringData_left = recvall(sock, int(length_left))
-        image_queue.put(stringData_left)
+        data_left = np.fromstring(stringData_left, dtype='uint8')
+        decimg_left = cv2.imdecode(data_left, 1)
+
+        global_image_queue.put(decimg_left)
         print("Image arrived!!")
 
     sock.close()
 
 
-def image_task(image_queue):
+def image_task():
 
     birdview = BirdsEye(negate=True)
 
-    key = ''
-    while key != ord('q'):
-        stringData_left = image_queue.get()
+    while True:
+        frame = global_image_queue.get()
         print("Received image")
-        data_left = np.fromstring(stringData_left, dtype='uint8')
-        decimg_left = cv2.imdecode(data_left, 1)
 
-        # Performs operations here
-        bird = birdview.apply(decimg_left)
-        # Line Detection
+        frame = cv2.medianBlur(frame, 3)
+
+        bird = birdview.apply(frame)
+
         left, right = ld.detect(bird, negate=True, robot=True)
+
+        left_speed, right_speed = st.calculate_steering(bird, left, right)
+
+        global_motion_queue.put((left_speed, right_speed))
 
         # ======================== PLOT ===========================
 
@@ -81,7 +88,7 @@ def image_task(image_queue):
                 cv2.circle(bird, (int(y_fit), i), 1, (0, 0, 255), thickness=1)
 
 
-        cv2.imshow('CLIENT_LEFT', decimg_left)
+        cv2.imshow('CLIENT_LEFT', frame)
         cv2.moveWindow('CLIENT_LEFT', 10, 10)
 
         cv2.imshow('BIRD', bird)
@@ -97,35 +104,16 @@ def motion_task():
     server_address = (socket.gethostbyname("drAIver.local"), OUTPUT_PORT)
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.connect(server_address)
+    sock.setblocking(1)
 
     mp = MotorProtocol()
 
+    while True:
 
-    running = True
-    while running:
+        left_speed, right_speed = global_motion_queue.get()
 
-        left_packet = mp.pack(0)
-        right_packet = mp.pack(0)
-
-        if keyboard.is_pressed('q'):
-            running = False
-            print("Stop!")
-
-        if keyboard.is_pressed('e'):
-            print("Motor Left Forth")
-            left_packet = mp.pack(SPEED)
-
-        elif keyboard.is_pressed('d'):
-            print("Motor Left Back")
-            left_packet = mp.pack(-SPEED)
-
-        if keyboard.is_pressed('p'):
-            print("Motor Right Forth")
-            right_packet = mp.pack(SPEED)
-
-        elif keyboard.is_pressed('l'):
-            print("Motor Right Back")
-            right_packet = mp.pack(-SPEED)
+        left_packet = mp.pack(left_speed)
+        right_packet = mp.pack(right_speed)
 
         packet = mp.merge(left_packet, right_packet)
         sock.send(packet.to_bytes(MotorProtocol.COMMUNICATION_PACKET_SIZE, byteorder='big'))
@@ -139,11 +127,10 @@ if __name__ == '__main__':
     motion_thread = Thread(target=motion_task)
     motion_thread.start()
 
-    image_thread = Thread(target=collect_image_data, args=[global_image_queue])
+    image_thread = Thread(target=collect_image_data)
     image_thread.start()
 
-    image_task(global_image_queue)
-
+    image_task()
 
 
 
