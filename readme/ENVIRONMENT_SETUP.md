@@ -88,6 +88,17 @@ ln -s <<PATH-TO-TENSORFLOW-MODEL>>/tensorflow-models/research/slim/* <<ANACONDA-
 ### Install darkflow ###
  [Install darkflow](https://github.com/thtrieu/darkflow)
 
+ ```sh
+git clone https://github.com/thtrieu/darkflow.git darflow
+source activate drAIver
+pip install Cython
+cd darkflow
+pip install .
+mkdir bin
+ ```
+
+ // TODo complete with download of weight + cfg
+
  // TODO complete
 
 #### WARNING:  windows installation ####
