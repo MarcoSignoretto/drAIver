@@ -9,8 +9,8 @@ import draiver.detectors.line_detector_v3 as ld
 DEBUG = False
 PLOT = False
 
-BASE_PATH = "/mnt/B01EEC811EEC41C8/" # Ubuntu Config
-#  BASE_PATH = "/Users/marco/Documents/"
+# BASE_PATH = "/mnt/B01EEC811EEC41C8/" # Ubuntu Config
+BASE_PATH = "/Users/marco/Documents/"
 
 VIDEO_PATH_1 = "Datasets/drAIver/KITTY/2011_09_26/2011_09_26_drive_0027_sync/image_03/data/"
 # TODO bad !! difficult for dotted lines and light changes
@@ -107,6 +107,7 @@ if __name__ == '__main__':
 
         cv2.imshow("Frame d", img)
         cv2.moveWindow("Frame d", 100, 100)
-        cv2.waitKey(1)
+        cv2.waitKey(0)
+        pass
 
     cv2.destroyAllWindows()

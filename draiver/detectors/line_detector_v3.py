@@ -21,7 +21,10 @@ BASE_PATH = "/Users/marco/Documents/" # Mac Config
 
 INTERSECTION_LINE = 150
 
-DEBUG = True
+FIT_POINTS_THRESHOLD = 200
+RESIDUALS_THRESHOLD = 120
+
+DEBUG = False
 PLOT = False
 
 
@@ -313,20 +316,24 @@ def detect(img, negate=False, robot=False, thin=False):
             cv2.circle(img, (int(y_values_right[i]), int(x_values_right[i])), 1, (255, 0, 0), thickness=1)
 
     #fit_time_start = time.time()
-    if len(x_values_left) > 100: # TODO fix custom threshold for realiable line
-        left_fit = np.polyfit(x_values_left, y_values_left, 2)
+    if len(x_values_left) > FIT_POINTS_THRESHOLD: # TODO fix custom threshold for realiable line
+        left_fit, residuals, rank, singular_values, rcond = np.polyfit(x_values_left, y_values_left, 2, full=True)
         # TODO check residuals for quality
-        left = left_fit
+        if residuals[0] / len(x_values_left) < RESIDUALS_THRESHOLD:
+            left = left_fit
+        print("Residuals: "+str(residuals) + "RES/n_points: "+str(residuals/len(x_values_left)))
 
         if DEBUG:
             for i in range(0, img.shape[0]-1):
                 y_fit = left_fit[0]*(i**2) + left_fit[1]*i + left_fit[2]
                 cv2.circle(img, (int(y_fit), i), 1, (0, 0, 255), thickness=1)
 
-    if len(x_values_right) > 100:  # TODO fix custom threshold for realiable line
-        right_fit = np.polyfit(x_values_right, y_values_right, 2)
+    if len(x_values_right) > FIT_POINTS_THRESHOLD:  # TODO fix custom threshold for realiable line
+        right_fit, residuals, rank, singular_values, rcond = np.polyfit(x_values_right, y_values_right, 2, full=True)
         # TODO check residuals for quality
-        right = right_fit
+        if residuals[0]/len(x_values_right) < RESIDUALS_THRESHOLD:
+            right = right_fit
+        print("Residuals: " + str(residuals) + "RES/n_points: "+str(residuals/len(x_values_right)))
 
         if DEBUG:
             for i in range(0, img.shape[0] - 1):
@@ -568,6 +575,6 @@ if __name__ == '__main__':
 
         cv2.imshow("Frame d", img)
         cv2.moveWindow("Frame d", 100, 100)
-        cv2.waitKey(0)
+        cv2.waitKey(1)
 
     cv2.destroyAllWindows()
