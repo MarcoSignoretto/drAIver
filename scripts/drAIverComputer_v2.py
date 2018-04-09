@@ -69,7 +69,7 @@ def image_task():
 
         bird = birdview.apply(frame)
 
-        left, right = ld.detect(bird, negate=True, robot=True)
+        left, right = ld.detect(bird, negate=True, robot=True, thin=True)
 
         left_speed, right_speed = st.calculate_steering(bird, left, right)
 

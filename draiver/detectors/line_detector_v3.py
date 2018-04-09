@@ -16,12 +16,12 @@ import time
 HEIGHT = 480
 WIDTH = 640
 
-BASE_PATH = "/mnt/B01EEC811EEC41C8/" # Ubuntu Config
-# BASE_PATH = "/Users/marco/Documents/" # Mac Config
+# BASE_PATH = "/mnt/B01EEC811EEC41C8/" # Ubuntu Config
+BASE_PATH = "/Users/marco/Documents/" # Mac Config
 
 INTERSECTION_LINE = 150
 
-DEBUG = False
+DEBUG = True
 PLOT = False
 
 
@@ -90,7 +90,7 @@ def find_median_line(th2, mask, threshold):
             items = res[height_pixels == i, 1]
             items = [item for item in items if mask[i][item] == 255]
 
-            if len(items) >= 1:
+            if len(items) >= threshold:
                 x_values.append(i)
                 y_values.append(np.median(items))
 
@@ -162,12 +162,16 @@ def update_mask_for_line(th2, line, mask, window_width, window_height, debug_img
             cv2.rectangle(debug_img, pt1, pt2, (0, 255, 0), thickness=3, lineType=cv2.LINE_8)
 
 
-def detect(img, negate=False, robot=False):
+def detect(img, negate=False, robot=False, thin=False):
 
     if robot:
         MEDIAN_LINE_THRESHOLD = 30  # Robot
     else:
         MEDIAN_LINE_THRESHOLD = 10  # Kitty
+
+    if thin:
+        MEDIAN_LINE_THRESHOLD = 1
+
 
     left = None
     right = None
@@ -201,7 +205,7 @@ def detect(img, negate=False, robot=False):
     if DEBUG:
         cv2.imshow("No erosion", th2)
         cv2.moveWindow("No erosion", 800, 600)
-    th2 = cv2.erode(th2, kernel=(7, 7, 1), iterations=3)  # TODO test
+    th2 = cv2.erode(th2, kernel=(11, 11, 1), iterations=4)  # TODO test
 
     #th2 = cv2.threshold(gray, 0, 255, cv2.THRESH_OTSU)  #TODO values for KITTY   maybe use a bit little biass
 
@@ -285,7 +289,8 @@ def detect(img, negate=False, robot=False):
 
     # ================================ POLYNOMIAL FIT ================================
     #thin_time_start = time.time()
-    th2 = thinning.guo_hall_thinning(th2) # TODO FIXME faster bat bad quality
+    if thin:
+        th2 = thinning.guo_hall_thinning(th2) # TODO FIXME faster bat bad quality
     #thin_time_stop = time.time()
     #print("Thin time:" + str(thin_time_stop - thin_time_start))
     if DEBUG:
@@ -308,7 +313,7 @@ def detect(img, negate=False, robot=False):
             cv2.circle(img, (int(y_values_right[i]), int(x_values_right[i])), 1, (255, 0, 0), thickness=1)
 
     #fit_time_start = time.time()
-    if len(x_values_left) > 10: # TODO fix custom threshold for realiable line
+    if len(x_values_left) > 100: # TODO fix custom threshold for realiable line
         left_fit = np.polyfit(x_values_left, y_values_left, 2)
         # TODO check residuals for quality
         left = left_fit
@@ -318,7 +323,7 @@ def detect(img, negate=False, robot=False):
                 y_fit = left_fit[0]*(i**2) + left_fit[1]*i + left_fit[2]
                 cv2.circle(img, (int(y_fit), i), 1, (0, 0, 255), thickness=1)
 
-    if len(x_values_right) > 10:  # TODO fix custom threshold for realiable line
+    if len(x_values_right) > 100:  # TODO fix custom threshold for realiable line
         right_fit = np.polyfit(x_values_right, y_values_right, 2)
         # TODO check residuals for quality
         right = right_fit
@@ -547,7 +552,7 @@ if __name__ == '__main__':
 
         # ======================== DETECTION ===========================
 
-        left, right = detect(img)
+        left, right = detect(img, thin=False)
 
         # ======================== PLOT ===========================
 

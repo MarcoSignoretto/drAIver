@@ -91,7 +91,7 @@ if __name__ == '__main__':
 
         # ======================== DETECTION ===========================
 
-        left, right = ld.detect(img)
+        left, right = ld.detect(img, thin=False)
 
         # ======================== PLOT ===========================
 
