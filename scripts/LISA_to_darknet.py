@@ -6,6 +6,8 @@ LISA_CSV = "Datasets/drAIver/LISA/annotations/vid_annotations_test.csv"
 # BASE_PATH = "/mnt/B01EEC811EEC41C8/" # Ubuntu Config
 BASE_PATH = "/Users/marco/Documents/"
 
+ANNOTATIONS_OUTPUT_DIR = "/Users/marco/Documents/GitProjects/UNIVE/darkflow/test/training/lisa/annotations/"
+
 
 def build_xml_tree(row):
     root = ET.Element("annotation")
@@ -70,7 +72,7 @@ def main():
                 filename = row[0][k:len(row[0])].replace('.png', '.xml')
 
                 tree = build_xml_tree(row)
-                tree.write(filename)
+                tree.write(ANNOTATIONS_OUTPUT_DIR+filename)
 
                 print(row)
             else:  # Skip column def
