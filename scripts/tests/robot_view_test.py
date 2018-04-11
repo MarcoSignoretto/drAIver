@@ -38,7 +38,7 @@ def image_task(queue):
         bird = birdview.apply(frame)
 
         # Line Detection
-        left, right = ld.detect(bird, negate=True, robot=True)
+        left, right = ld.detect(bird, negate=True, robot=True, thin=True)
 
         # ======================== PLOT ===========================
 

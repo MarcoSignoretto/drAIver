@@ -157,7 +157,7 @@ def local_motion_task(motion_queue):
 
         bird = birdview.apply(frame)
 
-        left, right = ld.detect(bird, negate=True, robot=True)
+        left, right = ld.detect(bird, negate=True, robot=True, thin=False)
         car_position = int(bird.shape[1] / 2)
 
         left_speed, right_speed = st.calculate_steering(left, right, car_position)
