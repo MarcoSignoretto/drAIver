@@ -10,11 +10,12 @@ In particular we need to adjust the ```labels.txt``` and the ```cfg```file to ad
 
 The config file for LISA dataset is available [here](https://github.com/MarcoSignoretto/drAIver/tree/master/data/trafficsigns_detector/tiny-yolov2-lisa.cfg) and the labels files are available [here](https://github.com/MarcoSignoretto/drAIver/tree/master/data/trafficsigns_detector/labels.txt) 
 
-1. Put ```tiny-yolov2-lisa.cfg``` into the ```<darkflow_home>/cfg/``` folder
-2. Put ```labels.txt``` into the ```<darkflow_home>``` folder
-3. copy the ```annotation_folder``` into ```<darkflow_home>/training/lisa/annotations``` // TODO complete
-4. copy the ```image_folder``` into ```<darkflow_home>/training/lisa/images``` // TODO complete
-5. Start training executing the collowing commands from the ```<darkflow_home>``` folder.
+1. Convert LISA annotations to Darkflow annotations using the script in ```scripts/LISA_to_darknet.py``` // TODO complete
+2. Put ```tiny-yolov2-lisa.cfg``` into the ```<darkflow_home>/cfg/``` folder
+3. Put ```labels.txt``` into the ```<darkflow_home>``` folder
+4. copy the ```annotation_folder``` into ```<darkflow_home>/training/lisa/annotations``` // TODO complete
+5. copy the ```image_folder``` into ```<darkflow_home>/training/lisa/images``` // TODO complete
+6. Start training executing the collowing commands from the ```<darkflow_home>``` folder.
 
 ```sh
 flow --model cfg/tiny-yolov2-lisa.cfg --train --dataset "training/lisa/images" --annotation "training/lisa/annotations" --labels "training/lisa/labels.txt"
