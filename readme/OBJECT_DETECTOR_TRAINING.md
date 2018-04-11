@@ -18,7 +18,7 @@ The config file for LISA dataset is available [here](https://github.com/MarcoSig
 6. Start training executing the collowing commands from the ```<darkflow_home>``` folder.
 
 ```sh
-flow --model cfg/tiny-yolov2-lisa.cfg --train --dataset "training/lisa/images" --annotation "training/lisa/annotations" --labels "training/lisa/labels.txt"
+flow --model "training/lisa/cfg/tiny-yolov2-lisa.cfg" --train --dataset "training/lisa/images" --annotation "training/lisa/annotations" --labels "training/lisa/labels.txt"
 ```
 6. Save the training result into ```.pb``` file 
 ```sh
