@@ -2,7 +2,7 @@
 import csv
 import xml.etree.cElementTree as ET
 
-LISA_CSV = "Datasets/drAIver/LISA/annotations/vid_annotations_test.csv"
+LISA_CSV = "Datasets/drAIver/LISA/annotations/vid_annotations.csv"
 # BASE_PATH = "/mnt/B01EEC811EEC41C8/" # Ubuntu Config
 BASE_PATH = "/Users/marco/Documents/"
 
@@ -73,8 +73,7 @@ def main():
 
                 tree = build_xml_tree(row)
                 tree.write(ANNOTATIONS_OUTPUT_DIR+filename)
-
-                print(row)
+                print("processed: "+filename)
             else:  # Skip column def
                 head = False
 
