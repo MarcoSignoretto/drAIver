@@ -34,6 +34,10 @@ To prepare and configure the robot follow the instructions [here](https://github
 
 The parameters to connect to the shared folder are: ```smb://pi@drAIver.local``` and prompt the password ```robots1234```
 
+## Train detector on custom Dataset
+
+To the training procedure see the section [training](https://github.com/MarcoSignoretto/drAIver/blob/master/readme/ENVIRONMENT_SETUP.md).
+
 ## References ##
 
 [BrickPi3 Documentation](http://www.aplu.ch/classdoc/dexter/brickpi3.BrickPi3-class.html)
