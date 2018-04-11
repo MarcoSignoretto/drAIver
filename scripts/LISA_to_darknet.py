@@ -6,7 +6,7 @@ LISA_CSV = "Datasets/drAIver/LISA/annotations/vid_annotations.csv"
 # BASE_PATH = "/mnt/B01EEC811EEC41C8/" # Ubuntu Config
 BASE_PATH = "/Users/marco/Documents/"
 
-ANNOTATIONS_OUTPUT_DIR = "/Users/marco/Documents/GitProjects/UNIVE/darkflow/test/training/lisa/annotations/"
+ANNOTATIONS_OUTPUT_DIR = "/Users/marco/Documents/GitProjects/UNIVE/darkflow/training/lisa/annotations/"
 
 
 def build_xml_tree(row):
