@@ -36,7 +36,7 @@ The parameters to connect to the shared folder are: ```smb://pi@drAIver.local```
 
 ## Train detector on custom Dataset
 
-To the training procedure see the section [training](https://github.com/MarcoSignoretto/drAIver/blob/master/readme/ENVIRONMENT_SETUP.md).
+To the training procedure see the section [training](https://github.com/MarcoSignoretto/drAIver/blob/master/readme/OBJECT_DETECTOR_TRAINING.md).
 
 ## References ##
 
