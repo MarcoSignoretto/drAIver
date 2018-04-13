@@ -19,7 +19,7 @@ BASE_PATH = "/Users/marco/Documents/" # Mac Config
 INTERSECTION_LINE = 150
 
 DEBUG = True
-PLOT = False
+PLOT = True
 
 #  =========================== TESTS ==============================
 
@@ -271,6 +271,11 @@ def detect(img, negate = False):
         gray = abs(255 - gray)
 
     th2 = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 31, -35)  # maybe use a bit little biass
+    ret, th = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+
+    if DEBUG:
+        cv2.imshow("Otzu", th)
+        cv2.imshow("Adaptive Mean", th2)
 
     lines = cv2.HoughLines(th2, 1, np.pi/180, 200)
     filtered_lines = []
@@ -294,7 +299,7 @@ def detect(img, negate = False):
                 if DEBUG:
                     cv2.line(img, (x1, y1), (x2, y2), (0, 255, 0), thickness=1, lineType=cv2.LINE_8)
 
-            filtered_lines.append((rho, theta))
+                filtered_lines.append((rho, theta))
 
         print("============ Filtered lines =============")
 
