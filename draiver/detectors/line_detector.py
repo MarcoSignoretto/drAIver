@@ -13,12 +13,13 @@ from draiver.camera.birdseye import BirdsEye
 HEIGHT = 480
 WIDTH = 640
 
-BASE_PATH = "/mnt/B01EEC811EEC41C8/"
+# BASE_PATH = "/mnt/B01EEC811EEC41C8/"
+BASE_PATH = "/Users/marco/Documents/" # Mac Config
 
 INTERSECTION_LINE = 150
 
 DEBUG = True
-PLOT = False
+PLOT = True
 
 #  =========================== TESTS ==============================
 
@@ -270,6 +271,11 @@ def detect(img, negate = False):
         gray = abs(255 - gray)
 
     th2 = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 31, -35)  # maybe use a bit little biass
+    ret, th = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+
+    if DEBUG:
+        cv2.imshow("Otzu", th)
+        cv2.imshow("Adaptive Mean", th2)
 
     lines = cv2.HoughLines(th2, 1, np.pi/180, 200)
     filtered_lines = []
@@ -289,11 +295,11 @@ def detect(img, negate = False):
 
             cv2.line(img, (x1, y1), (x2, y2), (255, 0, 0), thickness=2, lineType=cv2.LINE_8)
 
-            #if theta < 0.78 or theta > 2.35: #TODO fix theta
-            if DEBUG:
-                cv2.line(img, (x1, y1), (x2, y2), (0, 255, 0), thickness=1, lineType=cv2.LINE_8)
+            if theta < 0.78 or theta > 2.35: #TODO fix theta
+                if DEBUG:
+                    cv2.line(img, (x1, y1), (x2, y2), (0, 255, 0), thickness=1, lineType=cv2.LINE_8)
 
-            filtered_lines.append((rho, theta))
+                filtered_lines.append((rho, theta))
 
         print("============ Filtered lines =============")
 
@@ -403,7 +409,7 @@ if __name__ == '__main__':
     # gaussian a difficoltà sul molto scuro
 
     images = [
-        "Datasets/drAIver/line_detection/street.jpg",
+        # "Datasets/drAIver/line_detection/street.jpg",
         "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000009.png",
         "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000014.png",
         "Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000024.png",
@@ -473,7 +479,7 @@ if __name__ == '__main__':
 
         img = cv2.imread(BASE_PATH + path)
         img = cv2.resize(img, (WIDTH, HEIGHT))
-        img = birdeye.apply(img)
+        # img = birdeye.apply(img)
 
         # TODO cut image on half to have strongest line detection and avoid noise
 

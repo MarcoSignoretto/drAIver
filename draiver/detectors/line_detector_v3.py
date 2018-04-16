@@ -122,7 +122,7 @@ def find_median_line_old(th2, from_x, to_x):
 
 def compute_base_hist(th2):
     hist = np.sum(th2, axis=0)
-    hist = np.divide(hist, np.repeat(np.max(hist), th2.shape[1]))
+    # hist = np.divide(hist, np.repeat(np.max(hist), th2.shape[1]))
     return hist
 
 def update_mask_for_line(th2, line, mask, window_width, window_height, debug_img = None):
@@ -229,7 +229,7 @@ def detect(img, negate=False, robot=False, thin=False):
     #print("Base Hist time:"+str(hist_time_stop-hist_time_start))
 
     # =============================== THRESHOLD ========================================
-    LINE_THRESHOLD = 0.3
+    LINE_THRESHOLD = 40000  # 0.3
     left_line = None
     right_line = None
 
@@ -575,6 +575,6 @@ if __name__ == '__main__':
 
         cv2.imshow("Frame d", img)
         cv2.moveWindow("Frame d", 100, 100)
-        cv2.waitKey(1)
+        cv2.waitKey(0)
 
     cv2.destroyAllWindows()
