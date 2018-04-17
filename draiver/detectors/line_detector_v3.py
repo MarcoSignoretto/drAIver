@@ -27,9 +27,22 @@ RESIDUALS_THRESHOLD = 120
 DEBUG = False
 PLOT = False
 
+STEERING_RANGE = 300
+
 
 WINDOW_LINE_THRESHOLD = 10
 #  WINDOW_LINE_THRESHOLD = 5
+
+
+def compute_lines_based_on_available(left, right, steering_range=STEERING_RANGE):
+    if left is None:
+        left = np.copy(right)
+        left[2] = right[2] - steering_range
+    else:
+        right = np.copy(left)
+        right[2] = left[2] + steering_range
+    return left, right
+
 
 def compute_hist(th2, pt1, pt2):
     """
@@ -371,6 +384,10 @@ def detect(img, negate=False, robot=False, thin=False):
 
     print(left)
     print(right)
+
+    # TODO understand if this is good
+    # if (left is None and right is not None) or (right is None and left is not None):
+    #     left, right = compute_lines_based_on_available(left,right)
 
     return left, right
 

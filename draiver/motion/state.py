@@ -2,6 +2,7 @@
 from threading import Lock
 import draiver.camera.properties as cp
 import numpy as np
+import draiver.motion.steering as st
 
 DEFAULT_OBJECT_COLLISION_DISTANCE = 300
 DEFAULT_FRAME_WITHOUT_DETECTION = 10
@@ -51,6 +52,7 @@ class DrivingState:
         with self.lock:
             self.last_car_detections = detections
             detection_origins = np.zeros((3, len(self.last_car_detections)), dtype=np.float32)
+            detection_ends = np.zeros((3, len(self.last_car_detections)), dtype=np.float32)
             for i in range(0, len(self.last_car_detections)):
                 det = self.last_car_detections[i]
                 detection_origins[:, i] = [
@@ -58,14 +60,37 @@ class DrivingState:
                     det['bottomright']['y'],
                     1
                 ]
+                # TODO understand if this is good
+                # detection_ends[:, i] = [
+                #     det['topleft']['x'],
+                #     det['bottomright']['y'],
+                #     1
+                # ]
 
             if len(self.last_car_detections) > 0:
                 detection_origins_bird = np.matmul(self.perspective_transform, detection_origins)
                 detection_origins_bird = detection_origins_bird / detection_origins_bird[2]
+
+                # TODO understand if this is good
+                # detection_ends_bird = np.matmul(self.perspective_transform, detection_ends)
+                # detection_ends_bird = detection_ends_bird / detection_ends_bird[2]
+
                 max_index = np.argmax(detection_origins_bird[1])  # closest object
 
                 distance = self.bird_height - detection_origins_bird[1, max_index]
+
+                # TODO understand if this is good
+                # if self.last_left_line is not None and self.last_right_line is not None:
+                #     int_left = st.find_intersection_point(self.last_left_line, detection_origins_bird[1, max_index])
+                #     int_right = st.find_intersection_point(self.last_right_line, detection_origins_bird[1, max_index])
+                #
+                #     if detection_origins_bird[0, max_index] in range(int_left, int_right) and detection_ends_bird[0, max_index] in range(int_left,int_right):
+                #         self.avoid_collision = distance < self.object_collision_distance
+                # else: # No line detected so any object is in valid range
+                #     self.avoid_collision = distance < self.object_collision_distance
+
                 self.avoid_collision = distance < self.object_collision_distance
+
             elif self.frame_without_detection > DEFAULT_FRAME_WITHOUT_DETECTION:
                 self.frame_without_detection = 0
                 self.avoid_collision = False
