@@ -15,6 +15,7 @@ import time
 from draiver.detectors.objectdetector import SignDetector
 from draiver.detectors.objectdetector import CarDetector
 import draiver.camera.properties as cp
+import sys, getopt
 
 OUTPUT_PORT = 10001
 INPUT_PORT = 10000
@@ -33,7 +34,8 @@ global_sign_detection_queue = SkipQueue(1)
 global_motion_queue = SkipQueue(1)
 global_rendering_queue = SkipQueue(1)
 
-driving_state = DrivingState()
+driving_state = DrivingState((cp.BIRD_HEIGHT, cp.BIRD_WIDTH), (cp.FRAME_HEIGHT, cp.FRAME_WIDTH))
+
 
 def recvall(sock, count):
 
@@ -126,8 +128,11 @@ def line_detection_task():
 
 
 
+def fake_motion_task():
 
-
+    while True:
+        left_speed, right_speed = driving_state.compute_motion_informations()
+        print("Speed: "+str(left_speed)+str(right_speed))
 
 
 def motion_task():
@@ -216,7 +221,10 @@ def rendering_task():
         #     pt2 = (res['bottomright']['x'], res['bottomright']['y'])
         #     cv2.rectangle(frame, pt1, pt2, (0, 0, 255), thickness=3, lineType=cv2.LINE_8)
 
-        # ===
+        # ================= COLLISION LINE PLOT
+
+        collision_y = bird.shape[0] - driving_state.get_object_collision_distance()
+        cv2.line(bird, (0, collision_y), (bird.shape[1], collision_y), (255, 0, 0), thickness=2, lineType=cv2.LINE_8)
 
 
 
@@ -232,18 +240,19 @@ def rendering_task():
     cv2.destroyAllWindows()
 
 
-if __name__ == '__main__':
-
-    #motion_thread = Thread(target=motion_task)
-    #motion_thread.start()
-
-    # # Robot
-    # image_thread = Thread(target=collect_image_data)
-    # image_thread.start()
-
-    # Local camera
-    image_thread = Thread(target=collect_image_local_camera)
-    image_thread.start()
+def main(local = False):
+    if not local:
+        # =====Robot ======
+        motion_thread = Thread(target=motion_task)
+        motion_thread.start()
+        image_thread = Thread(target=collect_image_data)
+        image_thread.start()
+    else:
+        # ===== Local camera =====
+        motion_thread = Thread(target=fake_motion_task)
+        motion_thread.start()
+        image_thread = Thread(target=collect_image_local_camera)
+        image_thread.start()
 
     line_detection_thread = Thread(target=line_detection_task)
     line_detection_thread.start()
@@ -255,6 +264,28 @@ if __name__ == '__main__':
     sign_detection_thread.start()
 
     rendering_task()
+
+
+if __name__ == '__main__':
+    local = False
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], 'l', ['local'])
+    except getopt.GetoptError:
+        print('drAiverComputer_v3.py -l')
+        sys.exit(2)
+
+    for o, a in opts:
+        if o in ("-l", "--local"):
+            local = True
+        else:
+            assert False, "unhandled option"
+
+    main(local)
+
+
+
+
+
 
 
 
