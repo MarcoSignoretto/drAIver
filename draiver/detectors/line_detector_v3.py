@@ -552,6 +552,9 @@ if __name__ == '__main__':
         #img = cv2.GaussianBlur(img, (5, 5), 0)
         img = cv2.medianBlur(img, 3)  # remove noise from HS channels TODO choose
 
+        cv2.imshow("Original", img)
+        cv2.moveWindow("Original", 800, 100)
+
         # Work only on bird view
         if DEBUG:
             cv2.imshow("Frame", img)
@@ -572,6 +575,8 @@ if __name__ == '__main__':
             for i in range(0, img.shape[0] - 1):
                 y_fit = right[0] * (i ** 2) + right[1] * i + right[2]
                 cv2.circle(img, (int(y_fit), i), 1, (0, 0, 255), thickness=1)
+
+
 
         cv2.imshow("Frame d", img)
         cv2.moveWindow("Frame d", 100, 100)
