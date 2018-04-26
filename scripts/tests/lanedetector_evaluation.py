@@ -14,7 +14,6 @@ EVALUATION_PATH = BASE_PATH+"Datasets/drAIver/KITTY/lane_evaluation/"
 IMAGES = EVALUATION_PATH+"images/"
 GROUND_TRUTH = EVALUATION_PATH+"gt/"
 
-
 def convert_for_ground_true():
 
     images = [f for f in listdir(IMAGES) if isfile(join(IMAGES, f))]
@@ -54,15 +53,16 @@ def calculate_lane_position_deviation(line, bird_line):
 
     for i in range(0, bird_line.shape[0]):
         non_zero, _ = np.nonzero(bird_line[i])
-        min_val = min(non_zero)
-        max_val = max(non_zero)
+        if len(non_zero) > 0:
+            min_val = min(non_zero)
+            max_val = max(non_zero)
 
-        predicted = line[0]*(i**2) + line[1]*i + line[2]
+            predicted = line[0]*(i**2) + line[1]*i + line[2]
 
-        if predicted > max_val:
-            deviation = deviation + (predicted - max_val)
-        elif predicted < min_val:
-            deviation = deviation + (min_val - predicted)
+            if predicted > max_val:
+                deviation = deviation + (predicted - max_val)
+            elif predicted < min_val:
+                deviation = deviation + (min_val - predicted)
 
     return float(deviation)/float(bird_line.shape[0])
 
@@ -115,7 +115,11 @@ def evaluate():
 
     # images = [f for f in listdir(IMAGES) if isfile(join(IMAGES, f))]
     images = [
+        "2011_09_26_0027_0000000022.png",
+        # "2011_09_26_0029_0000000361.png",
         "2011_09_26_0028_0000000037.png",
+        "2011_09_26_0027_0000000058.png",
+        "2011_09_26_0029_0000000035.png",
     ]
 
     for path in images:
@@ -124,7 +128,6 @@ def evaluate():
 
         left_img = cv2.imread(str(GROUND_TRUTH) +"left_"+str(path))
         left_img = cv2.resize(left_img, (width, height))
-
 
         right_img = cv2.imread(str(GROUND_TRUTH) +"right_"+str(path))
         right_img = cv2.resize(right_img, (width, height))
@@ -146,6 +149,15 @@ def evaluate():
         print(left, right)
         print(left_features, right_features)
 
+        # ========== Plot ============
+        l_x, l_y = left_features
+        for i in range(0, len(l_x)):
+            cv2.circle(bird_left_col, (int(l_y[i]), int(l_x[i])), 1, (0, 255, 0), thickness=1)
+
+        r_x, r_y = right_features
+        for i in range(0, len(r_x) - 1):
+            cv2.circle(bird_right_col, (int(r_y[i]), int(r_x[i])), 1, (0, 255, 0), thickness=1)
+
         # ========== Accuracy ===========
         acc_left = calculate_lane_feature_accuracy(left_features, bird_left)
         print(acc_left)
@@ -162,25 +174,30 @@ def evaluate():
         detection_right_list.append(right is not None)
 
         # ========== Lane position deviation ========
+        if left is not None:
 
-        dev_left = calculate_lane_position_deviation(left, bird_left)
-        print(dev_left)
+            dev_left = calculate_lane_position_deviation(left, bird_left)
+            print(dev_left)
 
-        deviation_left_list.append(dev_left)
+            deviation_left_list.append(dev_left)
 
-        dev_right = calculate_lane_position_deviation(right, bird_right)
-        print(dev_right)
+            # ========== Plot ===========
+            for i in range(0, bird_left_col.shape[0]):
+                y_fit = left[0] * (i ** 2) + left[1] * i + left[2]
+                cv2.circle(bird_left_col, (int(y_fit), i), 1, (0, 0, 255), thickness=1)
 
-        deviation_right_list.append(dev_right)
+        if right is not None:
 
-        # ========== Plot ===========
-        for i in range(0, bird_left_col.shape[0]):
-            y_fit = left[0]*(i**2) + left[1]*i + left[2]
-            cv2.circle(bird_left_col, (int(y_fit), i), 1, (0, 0, 255), thickness=1)
+            dev_right = calculate_lane_position_deviation(right, bird_right)
+            print(dev_right)
 
-        for i in range(0, bird_right_col.shape[0]):
-            y_fit = right[0]*(i**2) + right[1]*i + right[2]
-            cv2.circle(bird_right_col, (int(y_fit), i), 1, (0, 0, 255), thickness=1)
+            deviation_right_list.append(dev_right)
+
+            # ========== Plot ===========
+            for i in range(0, bird_right_col.shape[0]):
+                y_fit = right[0] * (i ** 2) + right[1] * i + right[2]
+                cv2.circle(bird_right_col, (int(y_fit), i), 1, (0, 0, 255), thickness=1)
+
 
         cv2.imshow("Original", img)
         cv2.imshow("GT Left", left_img)
@@ -195,9 +212,23 @@ def evaluate():
         cv2.moveWindow("Original Bird", 100, 800)
         cv2.moveWindow("GT Left Bird", 800, 800)
         cv2.moveWindow("GT Right Bird", 1500, 800)
-        cv2.waitKey(0)
+        cv2.waitKey(1)
 
-
+    print("=============== SUMMARY ============")
+    print("Smaples: "+str(len(images)))
+    print()
+    print("mean_acc_left: "+str(np.mean(acc_left_list)))
+    print("mean_acc_right: "+ str(np.mean(acc_right_list)))
+    print("mean_acc: "+str(np.mean([acc_left_list, acc_right_list])))
+    print()
+    print("mean_deviation_left: " + str(np.mean(deviation_left_list)))
+    print("mean_deviation_right: " + str(np.mean(deviation_right_list)))
+    print("mean_deviation: " + str(np.mean([deviation_left_list, deviation_right_list])))
+    print()
+    print("mis_det_left: "+str(detection_left_list.count(False)/len(detection_left_list)))
+    print("mis_det_right: "+str(detection_right_list.count(False)/len(detection_right_list)))
+    mis_detection = [detection_left_list, detection_right_list]
+    print("mis_det: "+str(mis_detection.count(False)/len(mis_detection)))
 
 
 def main():
