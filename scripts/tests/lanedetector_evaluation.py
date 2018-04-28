@@ -45,7 +45,10 @@ def calculate_lane_feature_accuracy(line_features, bird_line):
         if bird_line[int(x[i]), int(y[i])][0] > 0:
             tp = tp + 1
 
-    return float(tp)/float(total)
+    if total != 0:
+        return float(tp)/float(total)
+    else:
+        return 0
 
 
 def calculate_lane_position_deviation(line, bird_line):
@@ -113,16 +116,20 @@ def evaluate():
     M = cv2.getPerspectiveTransform(points, destination_points)
     birdview = BirdsEye(M=M, width=width, height=height)
 
-    # images = [f for f in listdir(IMAGES) if isfile(join(IMAGES, f))]
-    images = [
-        "2011_09_26_0027_0000000022.png",
-        # "2011_09_26_0029_0000000361.png",
-        "2011_09_26_0028_0000000037.png",
-        "2011_09_26_0027_0000000058.png",
-        "2011_09_26_0029_0000000035.png",
-    ]
+    images = [f for f in listdir(IMAGES) if isfile(join(IMAGES, f))]
+    images = [f for f in images if ".png" in f]
+    # images = [
+    #     "2011_09_26_0027_0000000022.png",
+    #     # "2011_09_26_0029_0000000361.png",
+    #     "2011_09_26_0028_0000000037.png",
+    #     "2011_09_26_0027_0000000058.png",
+    #     "2011_09_26_0029_0000000035.png",
+    # ]
 
     for path in images:
+        print("=========================================")
+        print(path)
+        print()
         img = cv2.imread(str(IMAGES) + str(path))
         img = cv2.resize(img, (width, height))
 
@@ -159,15 +166,17 @@ def evaluate():
             cv2.circle(bird_right_col, (int(r_y[i]), int(r_x[i])), 1, (0, 255, 0), thickness=1)
 
         # ========== Accuracy ===========
-        acc_left = calculate_lane_feature_accuracy(left_features, bird_left)
-        print(acc_left)
+        if left is not None:
+            acc_left = calculate_lane_feature_accuracy(left_features, bird_left)
+            print(acc_left)
 
-        acc_left_list.append(acc_left)
+            acc_left_list.append(acc_left)
 
-        acc_right = calculate_lane_feature_accuracy(right_features, bird_right)
-        print(acc_right)
+        if right is not None:
+            acc_right = calculate_lane_feature_accuracy(right_features, bird_right)
+            print(acc_right)
 
-        acc_right_list.append(acc_right)
+            acc_right_list.append(acc_right)
 
         # ========== Detections ===========
         detection_left_list.append(left is not None)
@@ -212,22 +221,22 @@ def evaluate():
         cv2.moveWindow("Original Bird", 100, 800)
         cv2.moveWindow("GT Left Bird", 800, 800)
         cv2.moveWindow("GT Right Bird", 1500, 800)
-        cv2.waitKey(1)
+        cv2.waitKey(0)
 
     print("=============== SUMMARY ============")
     print("Smaples: "+str(len(images)))
     print()
     print("mean_acc_left: "+str(np.mean(acc_left_list)))
     print("mean_acc_right: "+ str(np.mean(acc_right_list)))
-    print("mean_acc: "+str(np.mean([acc_left_list, acc_right_list])))
+    print("mean_acc: "+str(np.mean(acc_left_list + acc_right_list)))
     print()
     print("mean_deviation_left: " + str(np.mean(deviation_left_list)))
     print("mean_deviation_right: " + str(np.mean(deviation_right_list)))
-    print("mean_deviation: " + str(np.mean([deviation_left_list, deviation_right_list])))
+    print("mean_deviation: " + str(np.mean(deviation_left_list + deviation_right_list)))
     print()
     print("mis_det_left: "+str(detection_left_list.count(False)/len(detection_left_list)))
     print("mis_det_right: "+str(detection_right_list.count(False)/len(detection_right_list)))
-    mis_detection = [detection_left_list, detection_right_list]
+    mis_detection = detection_left_list + detection_right_list
     print("mis_det: "+str(mis_detection.count(False)/len(mis_detection)))
 
 
