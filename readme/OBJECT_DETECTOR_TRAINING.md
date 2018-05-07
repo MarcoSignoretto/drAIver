@@ -26,7 +26,7 @@ flow --model "training/lisa/cfg/tiny-yolov2-lisa.cfg" --train --dataset "trainin
 ```
 6. Save the training result into ```.pb``` file 
 ```sh
-flow --model "training/lisa/cfg/tiny-yolov2-lisa.cfg" --load -1 --savepb
+flow --model "training/lisa/cfg/tiny-yolov2-lisa.cfg" --load -1 --labels "training/lisa/labels.txt" --savepb
 ```
 // TODO continue from here
 ### Testing
@@ -63,7 +63,7 @@ flow --model "training/kitty/cfg/tiny-yolov2-kitty.cfg" --train --dataset "train
 
 9. Save the training result into ```.pb``` file
 ```sh
-flow --model "training/kitty/cfg/tiny-yolov2-kitty.cfg" --load -1 --savepb
+flow --model "training/kitty/cfg/tiny-yolov2-kitty.cfg" --load -1 --labels "training/kitty/labels.txt" --savepb
 ```
 
 ### Testing
