@@ -8,16 +8,19 @@ import os
 from os import listdir, getcwd
 from os.path import join
 
-DATASET = "kitty"
+DATASET = "kitty_train_test"
 # DATASET = "lisa"
+
+IMAGES = "images_train"
+ANNOTATIONS = "annotations_train"
 
 BASE_PATH = "/Users/marco/Documents/"
 
 DATASET_PATH = BASE_PATH + "GitProjects/UNIVE/darkflow/training/"+DATASET+"/"
 
-ANNOTATIONS_INPUT = DATASET_PATH+"annotations/"
-IMAGE_INPUT = DATASET_PATH+"images/"
-ANNOTATIONS_OUTPUT = DATASET_PATH+"annotations_darknet/"
+ANNOTATIONS_INPUT = DATASET_PATH + ANNOTATIONS + "/"
+IMAGE_INPUT = DATASET_PATH + IMAGES+ "/"
+ANNOTATIONS_OUTPUT = DATASET_PATH + ANNOTATIONS + "_darknet/"
 CLASSES_FILE_PATH = DATASET_PATH+"labels.txt"
 
 
@@ -77,7 +80,7 @@ def convert_annotation(filename_no_ext):
 files = [f for f in listdir(ANNOTATIONS_INPUT) if isfile(join(ANNOTATIONS_INPUT, f))]
 files = [f for f in files if ".xml" in f]
 
-list_file = open('%ssources.txt' %DATASET_PATH, 'w')
+list_file = open('%s%s_sources.txt' %(DATASET_PATH, IMAGES), 'w')
 for filename in files:
     filename_no_ext = filename.replace('.xml', '')
     list_file.write('%s%s.png\n' % (IMAGE_INPUT,filename_no_ext))

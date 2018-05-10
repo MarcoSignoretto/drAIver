@@ -7,14 +7,16 @@ import os
 
 BASE_PATH = "/Users/marco/Documents/"
 
-LISA_PATH = BASE_PATH+"GitProjects/UNIVE/darkflow/training/lisa_train_test/"
-IMAGES = LISA_PATH+"images/"
-IMAGES_TRAIN = LISA_PATH+"images_train/"
-IMAGES_TEST = LISA_PATH+"images_test/"
+DATASET = "kitty_train_test"
 
-ANNOTATIONS = LISA_PATH+"annotations/"
-ANNOTATIONS_TRAIN = LISA_PATH+"annotations_train/"
-ANNOTATIONS_TEST = LISA_PATH+"annotations_test/"
+DATASET_PATH = BASE_PATH + "GitProjects/UNIVE/darkflow/training/" + DATASET + "/"
+IMAGES = DATASET_PATH + "images/"
+IMAGES_TRAIN = DATASET_PATH + "images_train/"
+IMAGES_TEST = DATASET_PATH + "images_test/"
+
+ANNOTATIONS = DATASET_PATH + "annotations/"
+ANNOTATIONS_TRAIN = DATASET_PATH + "annotations_train/"
+ANNOTATIONS_TEST = DATASET_PATH + "annotations_test/"
 
 TEST_PART = 0.3 # 30% test part
 

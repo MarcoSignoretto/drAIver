@@ -6,12 +6,12 @@ DARKFLOW_BASE = "/Users/marco/Documents/GitProjects/UNIVE/darkflow/" # MAC
 
 
 # Meta graph setup for sign
-SIGN_NET_PB_GRAPH = DARKFLOW_BASE+"built_graph/tiny-yolo-new.pb" #  TODO fix
-SIGN_NET_PB_META = DARKFLOW_BASE+"built_graph/tiny-yolo-new.meta" #  TODO fix
+SIGN_NET_PB_GRAPH = DARKFLOW_BASE+"built_graph/lisa/tiny-yolov2-lisa.pb"
+SIGN_NET_PB_META = DARKFLOW_BASE+"built_graph/lisa/tiny-yolov2-lisa.meta"
 
 # Meta grap setup for car, pedestrians, bicycle
-CAR_NET_PB_GRAPH = DARKFLOW_BASE+"built_graph/tiny-yolo-new.pb" #  TODO fix
-CAR_NET_PB_META = DARKFLOW_BASE+"built_graph/tiny-yolo-new.meta" #  TODO fix
+CAR_NET_PB_GRAPH = DARKFLOW_BASE+"built_graph/kitty/tiny-yolov2-kitty.pb"
+CAR_NET_PB_META = DARKFLOW_BASE+"built_graph/kitty/tiny-yolov2-kitty.meta"
 
 TEST_NET_MODEL = DARKFLOW_BASE+"cfg/tiny-yolo-voc.cfg"
 TEST_NET_WEIGHTS = DARKFLOW_BASE+"bin/tiny-yolo-voc.weights"
@@ -30,10 +30,10 @@ class ObjectDetector:
 
 class SignDetector(ObjectDetector):
 
-    def __init__(self, threshold=0.2):
-        super().__init__(SIGN_NET_PB_GRAPH, SIGN_NET_PB_META, threshold)
+    def __init__(self, sign_net_pb_graph=SIGN_NET_PB_GRAPH, threshold=0.2):
+        super().__init__(sign_net_pb_graph, SIGN_NET_PB_META, threshold)
 
 
 class CarDetector(ObjectDetector):
-    def __init__(self, threshold=0.2):
-        super().__init__(CAR_NET_PB_GRAPH, CAR_NET_PB_META, threshold)
+    def __init__(self, car_net_pb_graph=CAR_NET_PB_GRAPH, threshold=0.2):
+        super().__init__(car_net_pb_graph, CAR_NET_PB_META, threshold)

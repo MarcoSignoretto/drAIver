@@ -9,6 +9,14 @@ DARKFLOW_BASE = "/Users/marco/Documents/GitProjects/UNIVE/darkflow/" # MAC
 TEST_NET_MODEL = DARKFLOW_BASE+"cfg/tiny-yolo-voc.cfg"
 TEST_NET_WEIGHTS = DARKFLOW_BASE+"bin/tiny-yolo-voc.weights"
 
+# Meta graph setup for sign
+SIGN_NET_PB_GRAPH = DARKFLOW_BASE+"built_graph/lisa/tiny-yolov2-lisa.pb"
+SIGN_NET_PB_META = DARKFLOW_BASE+"built_graph/lisa/tiny-yolov2-lisa.meta"
+
+# Meta grap setup for car, pedestrians, bicycle
+CAR_NET_PB_GRAPH = DARKFLOW_BASE+"built_graph/kitty/tiny-yolov2-kitty.pb"
+CAR_NET_PB_META = DARKFLOW_BASE+"built_graph/kitty/tiny-yolov2-kitty.meta"
+
 # NET_MODEL = DARKFLOW_BASE+"cfg/tiny-yolo-new.cfg" # TODO remove is test on training
 
 # Meta graph setup
@@ -26,10 +34,10 @@ def main():
         "Datasets/drAIver/object_detector/test_images/cars.png",
     ]
 
-    options = {"model": TEST_NET_MODEL, "load": TEST_NET_WEIGHTS, "threshold": 0.2}
+    #options = {"model": TEST_NET_MODEL, "load": TEST_NET_WEIGHTS, "threshold": 0.2}
 
     #protobuf load
-    # options = {"pbLoad": NET_PB_GRAPH, "metaLoad": NET_PB_META, "threshold": 0.16}
+    options = {"pbLoad": CAR_NET_PB_GRAPH, "metaLoad": CAR_NET_PB_META, "threshold": 0.0}
 
     tfnet = TFNet(options)
 
