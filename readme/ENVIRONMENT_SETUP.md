@@ -107,3 +107,18 @@ mkdir bin
 1. for windows copy rc.exe e rcdll.dll to visual studio bin directory
 2. create shorcut to darkflow from site-packages of the virtual env
 3. copy flow outsite the original folder otherwise it doesn't work ( example create a folder flowdir and put it inside)
+
+### Install Darknet ###
+
+// following instructions
+
+#### Python binding ####
+
+1. Go to Darknet folder
+2. Open ```python/darknet.py```
+3. Changing the CDLL path with the path of the ```libdarknet.so``` (example /Users/marco/Documents/GitProjects/UNIVE/darknet/libdarknet.so)
+4. Copy lib file into correct folder
+```sh
+cp python/darknet.py /envs/drAIver/lib/python3.5/darknet.py
+```
+5. Adjust the ```.data``` file with absolute paths
