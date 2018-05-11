@@ -9,20 +9,7 @@ BASE_PATH = "/Users/marco/Documents/"
 ANNOTATIONS_OUTPUT_DIR = "/Users/marco/Documents/GitProjects/UNIVE/darkflow/training/lisa/annotations/"
 
 
-def build_xml_tree(row):
-    root = ET.Element("annotation")
-
-    k = row[0].rfind("/") + 1
-    filename = row[0][k:len(row[0])]
-    ET.SubElement(root, "filename").text = filename
-
-    size = ET.SubElement(root, "size")
-
-    # Fixed for LISA dataset
-    ET.SubElement(size, "width").text = "704"
-    ET.SubElement(size, "height").text = "480"
-    ET.SubElement(size, "depth").text = "3"
-
+def new_object(root, row):
     object = ET.SubElement(root, "object")
 
     ET.SubElement(object, "name").text = row[1]
@@ -37,31 +24,26 @@ def build_xml_tree(row):
     tree = ET.ElementTree(root)
     return tree
 
-# def build_xml_tree_fake():
-#     root = ET.Element("annotation")
-#
-#     ET.SubElement(root, "filename").text = "Filename"
-#
-#
-#
-#     object = ET.SubElement(root, "object")
-#
-#     ET.SubElement(object, "name").text = "Name"
-#
-#     bndbox = ET.SubElement(object, "bndbox")
-#
-#     ET.SubElement(bndbox, "xmin").text = "12"
-#     ET.SubElement(bndbox, "ymin").text = "13"
-#     ET.SubElement(bndbox, "xmax").text = "14"
-#     ET.SubElement(bndbox, "ymax").text = "15"
-#
-#     tree = ET.ElementTree(root)
-#     return tree
+
+def build_xml_tree(row):
+    root = ET.Element("annotation")
+
+    k = row[0].rfind("/") + 1
+    filename = row[0][k:len(row[0])]
+    ET.SubElement(root, "filename").text = filename
+
+    size = ET.SubElement(root, "size")
+
+    # Fixed for LISA dataset
+    ET.SubElement(size, "width").text = "704"
+    ET.SubElement(size, "height").text = "480"
+    ET.SubElement(size, "depth").text = "3"
+
+    return new_object(root, row)
 
 
 def main():
-    # tree = build_xml_tree_fake()
-    # tree.write("test.xml", pretty_print=True)
+    prev_file = ''
 
     head = True
     with open(BASE_PATH+LISA_CSV, newline='') as csvfile:
@@ -71,9 +53,17 @@ def main():
                 k = row[0].rfind("/") + 1
                 filename = row[0][k:len(row[0])].replace('.png', '.xml')
 
-                tree = build_xml_tree(row)
-                tree.write(ANNOTATIONS_OUTPUT_DIR+filename)
+                if filename != prev_file:
+                    tree = build_xml_tree(row)
+                else:
+                    in_file = open(ANNOTATIONS_OUTPUT_DIR + filename)
+                    tree = ET.parse(in_file)
+                    root = tree.getroot()
+                    tree = new_object(root, row)
+
+                tree.write(ANNOTATIONS_OUTPUT_DIR + filename)
                 print("processed: "+filename)
+                prev_file = filename
             else:  # Skip column def
                 head = False
 
