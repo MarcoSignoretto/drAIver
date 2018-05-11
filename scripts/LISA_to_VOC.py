@@ -13,7 +13,10 @@ def new_object(root, row):
     object = ET.SubElement(root, "object")
 
     ET.SubElement(object, "name").text = row[1]
-
+    ET.SubElement(object, "difficult").text = "0"
+    ET.SubElement(object, "occluded").text = "0"
+    ET.SubElement(object, "truncated").text = "0"
+    ET.SubElement(object, "pose").text = "Unspecified"
     bndbox = ET.SubElement(object, "bndbox")
 
     ET.SubElement(bndbox, "xmin").text = row[2]
@@ -31,6 +34,8 @@ def build_xml_tree(row):
     k = row[0].rfind("/") + 1
     filename = row[0][k:len(row[0])]
     ET.SubElement(root, "filename").text = filename
+    ET.SubElement(root, "folder").text = ""
+    ET.SubElement(root, "segmented").text = "0"
 
     size = ET.SubElement(root, "size")
 
