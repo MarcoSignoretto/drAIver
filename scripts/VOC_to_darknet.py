@@ -16,9 +16,9 @@ TYPE = "test"
 IMAGES = "images_" + TYPE
 ANNOTATIONS = "annotations_" + TYPE
 
-BASE_PATH = "/Users/marco/Documents/"
+BASE_PATH = "/home/marco/Desktop/drAIver/Datasets/"
 
-DATASET_PATH = BASE_PATH + "GitProjects/UNIVE/darkflow/training/"+DATASET+"/"
+DATASET_PATH = BASE_PATH + DATASET+"/"
 
 ANNOTATIONS_INPUT = DATASET_PATH + ANNOTATIONS + "/"
 IMAGE_INPUT = DATASET_PATH + IMAGES+ "/"
@@ -79,9 +79,11 @@ def convert_annotation(filename_no_ext):
 
 files = [f for f in listdir(ANNOTATIONS_INPUT) if isfile(join(ANNOTATIONS_INPUT, f))]
 files = [f for f in files if ".xml" in f]
+files = [f for f in files if '._' not in f] # Avoid mac issues
 
 list_file = open('%s%s_sources.txt' %(DATASET_PATH, IMAGES), 'w')
 for filename in files:
+    print("open: %s" %filename)
     filename_no_ext = filename.replace('.xml', '')
     list_file.write('%s%s.png\n' % (IMAGE_INPUT,filename_no_ext))
     convert_annotation(filename_no_ext)
