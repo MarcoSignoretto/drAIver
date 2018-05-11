@@ -110,7 +110,8 @@ mkdir bin
 
 ### Install Darknet ###
 
-// following instructions
+Clone darknet from my fork [Darknet for drAIver](https://github.com/MarcoSignoretto/darknet)
+and follow the instructions of the official repo see below
 
 #### Python binding ####
 
