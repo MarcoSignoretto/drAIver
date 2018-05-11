@@ -5,11 +5,11 @@ from random import randint
 import os
 
 
-BASE_PATH = "/Users/marco/Documents/"
+BASE_PATH = "/home/marco/Desktop/drAIver/Datasets/"
 
 DATASET = "kitty_train_test"
 
-DATASET_PATH = BASE_PATH + "GitProjects/UNIVE/darkflow/training/" + DATASET + "/"
+DATASET_PATH = BASE_PATH + DATASET + "/"
 IMAGES = DATASET_PATH + "images/"
 IMAGES_TRAIN = DATASET_PATH + "images_train/"
 IMAGES_TEST = DATASET_PATH + "images_test/"
@@ -23,6 +23,7 @@ TEST_PART = 0.3 # 30% test part
 def main():
     images = [f for f in listdir(IMAGES) if isfile(join(IMAGES, f))]
     images = [f for f in images if ".png" in f]
+    images = [f for f in images if '._' not in f] # Avoid mac issues
 
     if not os.path.exists(IMAGES_TEST):
         os.makedirs(IMAGES_TEST)
