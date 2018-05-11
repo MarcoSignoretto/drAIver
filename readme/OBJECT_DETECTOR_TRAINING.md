@@ -70,4 +70,14 @@ flow --model "training/kitty/cfg/tiny-yolov2-kitty.cfg" --load -1 --labels "trai
 
 // TODO add command to load network from .pb
 
+# Training using Darknet 
+
+// TODO remember to change training to testing when trsining is completed
+
+1. Copy ```cfg/kitty.data``` into darknet ```cfg``` folder
+2. Copy ```cfg/tiny-yolov3-kitty.cfg``` into darknet ```cfg``` folder
+3. Copy ```data/kitty.names``` into darknet ```data``` folder
+```sh
+./darknet detector train cfg/kitty.data cfg/tiny-yolov3-kitty.cfg darknet53.conv.74
+```
 

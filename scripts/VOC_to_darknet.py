@@ -11,8 +11,10 @@ from os.path import join
 DATASET = "kitty_train_test"
 # DATASET = "lisa"
 
-IMAGES = "images_train"
-ANNOTATIONS = "annotations_train"
+TYPE = "test"
+
+IMAGES = "images_" + TYPE
+ANNOTATIONS = "annotations_" + TYPE
 
 BASE_PATH = "/Users/marco/Documents/"
 
@@ -20,10 +22,8 @@ DATASET_PATH = BASE_PATH + "GitProjects/UNIVE/darkflow/training/"+DATASET+"/"
 
 ANNOTATIONS_INPUT = DATASET_PATH + ANNOTATIONS + "/"
 IMAGE_INPUT = DATASET_PATH + IMAGES+ "/"
-ANNOTATIONS_OUTPUT = DATASET_PATH + ANNOTATIONS + "_darknet/"
+ANNOTATIONS_OUTPUT = DATASET_PATH + "labels_%s/" %TYPE
 CLASSES_FILE_PATH = DATASET_PATH+"labels.txt"
-
-
 
 # sets=[('2012', 'train'), ('2012', 'val'), ('2007', 'train'), ('2007', 'val'), ('2007', 'test')]
 

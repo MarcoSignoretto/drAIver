@@ -1,0 +1,5 @@
+classes= 9
+train  = /Users/marco/Documents/GitProjects/UNIVE/darkflow/training/kitty_train_test/images_train_sources.txt
+valid  = /Users/marco/Documents/GitProjects/UNIVE/darkflow/training/kitty_train_test/images_test_sources.txt
+names = data/kitty.names
+backup = backup
