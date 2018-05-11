@@ -8,15 +8,18 @@ import os
 from os import listdir, getcwd
 from os.path import join
 
-DATASET = "kitty_train_test"
+# UNIVE PC
+#BASE_PATH = "/home/marco/Desktop/drAIver/Datasets/"
+# MAC
+BASE_PATH = "/Users/marco/Documents/GitProjects/UNIVE/darkflow/training/"
+
+DATASET = "lisa_train_test"
 # DATASET = "lisa"
 
 TYPE = "test"
 
 IMAGES = "images_" + TYPE
 ANNOTATIONS = "annotations_" + TYPE
-
-BASE_PATH = "/home/marco/Desktop/drAIver/Datasets/"
 
 DATASET_PATH = BASE_PATH + DATASET+"/"
 
