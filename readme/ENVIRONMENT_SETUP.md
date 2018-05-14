@@ -85,9 +85,10 @@ ln -s <<PATH-TO-TENSORFLOW-MODEL>>tensorflow-models/research/* <<ANACONDA-INSTAL
 ln -s <<PATH-TO-TENSORFLOW-MODEL>>/tensorflow-models/research/slim/* <<ANACONDA-INSTALLATION-DIR>>/anaconda3/envs/drAIver/lib/python3.5/site-packages/
  ```
 
-### Install darkflow ###
+### Install darkflow (Deprecated) ###
  [Install darkflow](https://github.com/thtrieu/darkflow)
 
+1. Install the library
  ```sh
 git clone https://github.com/thtrieu/darkflow.git darflow
 source activate drAIver
@@ -97,18 +98,7 @@ pip install .
 mkdir bin
  ```
 
- // TODo complete with download of weight + cfg
-
- // TODO complete
-
-#### WARNING:  windows installation ####
-
-// FIXME not precise
-1. for windows copy rc.exe e rcdll.dll to visual studio bin directory
-2. create shorcut to darkflow from site-packages of the virtual env
-3. copy flow outsite the original folder otherwise it doesn't work ( example create a folder flowdir and put it inside)
-
-### Install Darknet ###
+### Install Darknet for drAIver ###
 
 Clone darknet from my fork [Darknet for drAIver](https://github.com/MarcoSignoretto/darknet)
 and follow the instructions of the official repo see below
