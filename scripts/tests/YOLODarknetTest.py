@@ -2,14 +2,22 @@
 from darknet import *
 import cv2
 import draiver.util.drawing as dr
+from os import listdir
+from os.path import isfile, join
 
 # Tiny YOLOv3
-NET = b"cfg/yolov3-tiny.cfg"
-WEIGHTS = b"bin/yolov3-tiny.weights"
+# NET = b"cfg/yolov3-tiny.cfg"
+# WEIGHTS = b"bin/yolov3-tiny.weights"
+
+NET = b"cfg/tiny-yolov3-kitty.cfg"
+WEIGHTS = b"bin/tiny-yolov3-kitty.weights"
+DATA = b"cfg/kitty.data"
 
 # YOLOv3
 # NET = b"cfg/yolov3.cfg"
 # WEIGHTS = b"bin/yolov3.weights"
+
+IMAGES = "/Users/marco/Documents/Datasets/drAIver/KITTY/data_object_image_2/testing/image_2/"
 
 DARKNET_PATH = b"/Users/marco/Documents/GitProjects/UNIVE/darknet/"
 DARKNET_PATH_NO_BIN = "/Users/marco/Documents/GitProjects/UNIVE/darknet/"
@@ -32,6 +40,19 @@ def main_opencv(net, meta):
 
     print(detections)
 
+def opencv_test(net, meta, img):
+    im = nparray_to_image(img)
+    r = detect_im(net, meta, im)
+    detections = convert_format(r)
+
+    for res in detections:
+        dr.draw_detection(img, res)
+
+    cv2.imshow("w", img)
+    cv2.waitKey(0)
+
+    print(detections)
+
 def convert_format(r):
     detections = []
     for obj_class, obj_confidence, (x, y, width, height) in r:
@@ -42,12 +63,27 @@ def convert_format(r):
     return detections
 
 
-if __name__ == "__main__":
-    net = load_net(DARKNET_PATH + NET, DARKNET_PATH + WEIGHTS, 0)
-    meta = load_meta(DARKNET_PATH + b"cfg/coco.data")  # TODo add absolute paths otherwise it doesn't work
+def main():
+    images = [f for f in listdir(IMAGES) if isfile(join(IMAGES, f))]
+    images = [f for f in images if ".png" in f]
+    images = [f for f in images if '._' not in f]  # Avoid mac issues
 
-    main_noopencv(net, meta)
-    main_opencv(net, meta)
+    net = load_net(DARKNET_PATH + NET, DARKNET_PATH + WEIGHTS, 0)
+    meta = load_meta(DARKNET_PATH + DATA)
+
+    for filename in images:
+        img = cv2.imread(IMAGES + filename)
+        opencv_test(net, meta, img)
+
+
+
+if __name__ == "__main__":
+    main()
+    # net = load_net(DARKNET_PATH + NET, DARKNET_PATH + WEIGHTS, 0)
+    # meta = load_meta(DARKNET_PATH + DATA)  # TODo add absolute paths otherwise it doesn't work
+    #
+    # main_noopencv(net, meta)
+    # main_opencv(net, meta)
 
 
 
