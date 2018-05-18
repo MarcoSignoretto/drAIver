@@ -8,22 +8,25 @@ import os
 from os import listdir, getcwd
 from os.path import join
 
-DATASET = "kitty_train_test"
+# UNIVE PC
+#BASE_PATH = "/home/marco/Desktop/drAIver/Datasets/"
+# MAC
+BASE_PATH = "/Users/marco/Documents/GitProjects/UNIVE/darkflow/training/"
+
+DATASET = "lisa_train_test"
 # DATASET = "lisa"
 
-IMAGES = "images_train"
-ANNOTATIONS = "annotations_train"
+TYPE = "test"
 
-BASE_PATH = "/Users/marco/Documents/"
+IMAGES = "images_" + TYPE
+ANNOTATIONS = "annotations_" + TYPE
 
-DATASET_PATH = BASE_PATH + "GitProjects/UNIVE/darkflow/training/"+DATASET+"/"
+DATASET_PATH = BASE_PATH + DATASET+"/"
 
 ANNOTATIONS_INPUT = DATASET_PATH + ANNOTATIONS + "/"
 IMAGE_INPUT = DATASET_PATH + IMAGES+ "/"
-ANNOTATIONS_OUTPUT = DATASET_PATH + ANNOTATIONS + "_darknet/"
+ANNOTATIONS_OUTPUT = DATASET_PATH + "labels_%s/" %TYPE
 CLASSES_FILE_PATH = DATASET_PATH+"labels.txt"
-
-
 
 # sets=[('2012', 'train'), ('2012', 'val'), ('2007', 'train'), ('2007', 'val'), ('2007', 'test')]
 
@@ -79,9 +82,11 @@ def convert_annotation(filename_no_ext):
 
 files = [f for f in listdir(ANNOTATIONS_INPUT) if isfile(join(ANNOTATIONS_INPUT, f))]
 files = [f for f in files if ".xml" in f]
+files = [f for f in files if '._' not in f] # Avoid mac issues
 
 list_file = open('%s%s_sources.txt' %(DATASET_PATH, IMAGES), 'w')
 for filename in files:
+    print("open: %s" %filename)
     filename_no_ext = filename.replace('.xml', '')
     list_file.write('%s%s.png\n' % (IMAGE_INPUT,filename_no_ext))
     convert_annotation(filename_no_ext)

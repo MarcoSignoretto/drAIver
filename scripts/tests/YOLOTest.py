@@ -29,15 +29,15 @@ BASE_PATH = "/Users/marco/Documents/"
 
 def main():
     images = [
-        "Datasets/drAIver/object_detector/test_images/car.png",
-        "Datasets/drAIver/object_detector/test_images/car_2.png",
+        #"Datasets/drAIver/object_detector/test_images/car.png",
+        #"Datasets/drAIver/object_detector/test_images/car_2.png",
         "Datasets/drAIver/object_detector/test_images/cars.png",
     ]
 
-    #options = {"model": TEST_NET_MODEL, "load": TEST_NET_WEIGHTS, "threshold": 0.2}
+    options = {"model": TEST_NET_MODEL, "load": TEST_NET_WEIGHTS, "threshold": 0.2}
 
     #protobuf load
-    options = {"pbLoad": CAR_NET_PB_GRAPH, "metaLoad": CAR_NET_PB_META, "threshold": 0.0}
+    #options = {"pbLoad": CAR_NET_PB_GRAPH, "metaLoad": CAR_NET_PB_META, "threshold": 0.0}
 
     tfnet = TFNet(options)
 

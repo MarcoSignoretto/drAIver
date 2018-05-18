@@ -1,3 +1,6 @@
+# Robot setup from builed image #
+
+You can download a preconfigure system image from [here](https://drive.google.com/drive/folders/1Xnw9V8DB0w5RZ8zmVMusUf0h7CnmreSr?usp=sharing)
 
 # Robot environment setup #
 
@@ -11,9 +14,6 @@ The robot environment are based on Python 3.4 with OpenCv 3.3.0
 ## Installing Raspbian for Robots ##
 
 First of all we need to install the Operating System on our RaspberryPi3, to do that we need to follow the [Official Installation Guide from Dexter Industries](https://www.dexterindustries.com/howto/install-raspbian-for-robots-image-on-an-sd-card/)
-
-// TODO add my image base + completed
-
 
 ## Raspberry setup ##
 

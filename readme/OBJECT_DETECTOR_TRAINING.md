@@ -70,4 +70,20 @@ flow --model "training/kitty/cfg/tiny-yolov2-kitty.cfg" --load -1 --labels "trai
 
 // TODO add command to load network from .pb
 
+# Training using Darknet 
+
+// TODO remember to change training to testing when trsining is completed
+
+1. Copy ```cfg/kitty.data``` into darknet ```cfg``` folder
+2. Copy ```cfg/tiny-yolov3-kitty.cfg``` into darknet ```cfg``` folder
+3. Copy ```data/kitty.names``` into darknet ```data``` folder
+4. Changing the paths in ```kitty.data``` to point to correct source files.
+5. Moving into ```darknet``` folder
+6. Download ```darknet53.conv.74``` with ```wget https://pjreddie.com/media/files/darknet53.conv.74```
+7. Start training
+```sh
+./darknet detector train cfg/kitty.data cfg/tiny-yolov3-kitty.cfg darknet53.conv.74
+```
+
+You can also download the pretrained darknet network weights from [here](https://drive.google.com/drive/folders/1Xnw9V8DB0w5RZ8zmVMusUf0h7CnmreSr?usp=sharing)
 

@@ -4,12 +4,14 @@ from os.path import isfile, join
 from random import randint
 import os
 
+# UNIVE PC
+#BASE_PATH = "/home/marco/Desktop/drAIver/Datasets/"
+# MAC
+BASE_PATH = "/Users/marco/Documents/GitProjects/UNIVE/darkflow/training/"
 
-BASE_PATH = "/Users/marco/Documents/"
+DATASET = "lisa_train_test"
 
-DATASET = "kitty_train_test"
-
-DATASET_PATH = BASE_PATH + "GitProjects/UNIVE/darkflow/training/" + DATASET + "/"
+DATASET_PATH = BASE_PATH + DATASET + "/"
 IMAGES = DATASET_PATH + "images/"
 IMAGES_TRAIN = DATASET_PATH + "images_train/"
 IMAGES_TEST = DATASET_PATH + "images_test/"
@@ -20,9 +22,11 @@ ANNOTATIONS_TEST = DATASET_PATH + "annotations_test/"
 
 TEST_PART = 0.3 # 30% test part
 
+
 def main():
     images = [f for f in listdir(IMAGES) if isfile(join(IMAGES, f))]
     images = [f for f in images if ".png" in f]
+    images = [f for f in images if '._' not in f]  # Avoid mac issues
 
     if not os.path.exists(IMAGES_TEST):
         os.makedirs(IMAGES_TEST)
@@ -40,10 +44,10 @@ def main():
         filename = images[item_index]
         os.rename(IMAGES+filename, IMAGES_TEST+filename)
 
-        filenameXml = filename.replace('.png', '.xml')
-        os.rename(ANNOTATIONS + filenameXml, ANNOTATIONS_TEST + filenameXml)
+        filename_xml = filename.replace('.png', '.xml')
+        os.rename(ANNOTATIONS + filename_xml, ANNOTATIONS_TEST + filename_xml)
 
-        print(filename, filenameXml)
+        print(filename, filename_xml)
 
     os.rename(IMAGES, IMAGES_TRAIN)
     os.rename(ANNOTATIONS, ANNOTATIONS_TRAIN)

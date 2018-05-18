@@ -85,9 +85,10 @@ ln -s <<PATH-TO-TENSORFLOW-MODEL>>tensorflow-models/research/* <<ANACONDA-INSTAL
 ln -s <<PATH-TO-TENSORFLOW-MODEL>>/tensorflow-models/research/slim/* <<ANACONDA-INSTALLATION-DIR>>/anaconda3/envs/drAIver/lib/python3.5/site-packages/
  ```
 
-### Install darkflow ###
+### Install darkflow (Deprecated) ###
  [Install darkflow](https://github.com/thtrieu/darkflow)
 
+1. Install the library
  ```sh
 git clone https://github.com/thtrieu/darkflow.git darflow
 source activate drAIver
@@ -97,13 +98,18 @@ pip install .
 mkdir bin
  ```
 
- // TODo complete with download of weight + cfg
+### Install Darknet for drAIver ###
 
- // TODO complete
+Clone darknet from my fork [Darknet for drAIver](https://github.com/MarcoSignoretto/darknet)
+and follow the instructions of the official repo see below
 
-#### WARNING:  windows installation ####
+#### Python binding ####
 
-// FIXME not precise
-1. for windows copy rc.exe e rcdll.dll to visual studio bin directory
-2. create shorcut to darkflow from site-packages of the virtual env
-3. copy flow outsite the original folder otherwise it doesn't work ( example create a folder flowdir and put it inside)
+1. Go to Darknet folder
+2. Open ```python/darknet.py```
+3. Changing the CDLL path with the path of the ```libdarknet.so``` (example /Users/marco/Documents/GitProjects/UNIVE/darknet/libdarknet.so)
+4. Copy lib file into correct folder
+```sh
+cp python/darknet.py /envs/drAIver/lib/python3.5/darknet.py
+```
+5. Adjust the ```.data``` file with absolute paths
