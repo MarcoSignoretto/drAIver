@@ -85,3 +85,5 @@ flow --model "training/kitty/cfg/tiny-yolov2-kitty.cfg" --load -1 --labels "trai
 ./darknet detector train cfg/kitty.data cfg/tiny-yolov3-kitty.cfg darknet53.conv.74
 ```
 
+You can also download the pretrained darknet network weights from [here](https://drive.google.com/drive/folders/1Xnw9V8DB0w5RZ8zmVMusUf0h7CnmreSr?usp=sharing)
+
