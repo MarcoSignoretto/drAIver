@@ -6,6 +6,7 @@ import sys, getopt
 def main(option):
     with open('report_%s.pickle' % option, 'rb') as handle:
         report = pk.load(handle)
+        print("pippo")
 
 def compute_mAP(report):
     pass

@@ -13,10 +13,10 @@ import time
 from darknet import *
 import _pickle as pk
 
-BASE_PATH = "/Users/marco/Documents/" # Mac Config
-# BASE_PATH = "/mnt/B01EEC811EEC41C8/" # Ubuntu Config
+# BASE_PATH = "/Users/marco/Documents/GitProjects/UNIVE/darkflow/training/" # Mac Config
+BASE_PATH = "/mnt/B01EEC811EEC41C8/Datasets/drAIver/" # Ubuntu Config
 
-DATASETS_PATH = BASE_PATH + "GitProjects/UNIVE/darkflow/training/"
+DATASETS_PATH = BASE_PATH
 
 # TODO fix kitty test images ( not available )
 
@@ -259,6 +259,14 @@ def main(option, dataset_path, test_images_path, gt_path):
     for c in classes_files:
         classes.append(c)
 
+    if option == "kitty":
+        detector = CarDetector()
+    elif option == "lisa":
+        detector = SignDetector()
+    else:
+        print("ERROR!!!!!!! invalid option!!!!")
+        exit()
+
     for c in classes:
 
         threshold = DETECTION_THRESHOLD_BASE
@@ -268,13 +276,7 @@ def main(option, dataset_path, test_images_path, gt_path):
 
         while threshold <= 1.0:
 
-            if option == "kitty":
-                detector = CarDetector(threshold=threshold)
-            elif option == "lisa":
-                detector = SignDetector(threshold=threshold)
-            else:
-                print("ERROR!!!!!!! invalid option!!!!")
-                exit()
+            detector.set_threshold(threshold=threshold)
 
             results.append(evaluate_performances(detector, test_images_path, gt_path, c))
 

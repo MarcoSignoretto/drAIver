@@ -17,7 +17,9 @@ from darknet import *
 # TEST_NET_WEIGHTS = DARKFLOW_BASE+"bin/tiny-yolo-voc.weights"
 
 # MAC
-DARKNET_PATH = b"/Users/marco/Documents/GitProjects/UNIVE/darknet/"
+# DARKNET_PATH = b"/Users/marco/Documents/GitProjects/UNIVE/darknet/"
+# UBUNTU
+DARKNET_PATH = b"/mnt/B01EEC811EEC41C8/GITProjects/UNIVE/darknet/"
 
 # KITTY
 KITTY_NET = b"cfg/tiny-yolov3-kitty.cfg"
@@ -32,10 +34,13 @@ LISA_DATA = b"cfg/kitty.data"
 
 class ObjectDetector:
 
-    def __init__(self, net, weights, data, threshold=0.5):
-        self.threshold = threshold
+    def __init__(self, net, weights, data):
+        self.threshold = 0.5
         self.net = load_net(DARKNET_PATH + net, DARKNET_PATH + weights, 0)
         self.meta = load_meta(DARKNET_PATH + data)
+
+    def set_threshold(self, threshold):
+        self.threshold = threshold
 
     def convert_format(self, r):
         detections = []
@@ -59,10 +64,10 @@ class ObjectDetector:
 
 class SignDetector(ObjectDetector):
 
-    def __init__(self, net=LISA_NET, weights=LISA_WEIGHTS, data=LISA_DATA, threshold=0.5):
-        super().__init__(net, weights, data, threshold)
+    def __init__(self, net=LISA_NET, weights=LISA_WEIGHTS, data=LISA_DATA):
+        super().__init__(net, weights, data)
 
 
 class CarDetector(ObjectDetector):
-    def __init__(self, net=KITTY_NET, weights=KITTY_WEIGHTS, data=KITTY_DATA, threshold=0.5):
-        super().__init__(net, weights, data, threshold)
+    def __init__(self, net=KITTY_NET, weights=KITTY_WEIGHTS, data=KITTY_DATA):
+        super().__init__(net, weights, data)
