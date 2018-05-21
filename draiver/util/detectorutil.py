@@ -27,5 +27,9 @@ def find_box_gt(xml_obj):
     ])
 
 
+def box_area(box):
+    return (box[2] - box[0] + 1) * (box[3] - box[1] + 1)
+
+
 def find_class_gt(xml_obj):
     return str(xml_obj.find('name').text)

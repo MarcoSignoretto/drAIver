@@ -20,7 +20,6 @@ DATASETS_PATH = BASE_PATH
 
 # TODO fix kitty test images ( not available )
 
-# =========== MAC configs =======
 KITTY_PATH = DATASETS_PATH + "kitty_train_test/"
 LISA_PATH = DATASETS_PATH + "lisa_train_test/"
 
@@ -31,10 +30,9 @@ KITTY_GROUND_TRUTH = KITTY_PATH + "annotations_test/" # TODO complete
 LISA_GROUND_TRUTH = LISA_PATH + "annotations_test/" # TODO complete
 
 
-
 IOU_THRESHOLD = 0.5
-DETECTION_THRESHOLD_BASE = 0.05
-DETECTION_THRESHOLD_PACE = 0.05
+DETECTION_THRESHOLD_BASE = 0.01
+DETECTION_THRESHOLD_PACE = 0.01
 
 def compute_score_components(detector, test_images_path, gt_path):
     # TODO complete
