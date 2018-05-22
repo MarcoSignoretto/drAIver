@@ -27,9 +27,9 @@ KITTY_WEIGHTS = b"bin/tiny-yolov3-kitty.weights"
 KITTY_DATA = b"cfg/kitty.data"
 
 # LISA
-LISA_NET = b"cfg/tiny-yolov3-kitty.cfg"
-LISA_WEIGHTS = b"bin/tiny-yolov3-kitty.weights"
-LISA_DATA = b"cfg/kitty.data"
+LISA_NET = b"cfg/tiny-yolov3-lisa.cfg"
+LISA_WEIGHTS = b"bin/tiny-yolov3-lisa.weights"
+LISA_DATA = b"cfg/lisa.data"
 
 
 class ObjectDetector:
