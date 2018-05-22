@@ -12,14 +12,14 @@ import draiver.camera.properties as cp
 # WEIGHTS = b"bin/yolov3-tiny.weights"
 
 # KITTY
-# NET = b"cfg/tiny-yolov3-kitty.cfg"
-# WEIGHTS = b"bin/tiny-yolov3-kitty.weights"
-# DATA = b"cfg/kitty.data"
+NET_KITTY = b"cfg/tiny-yolov3-kitty.cfg"
+WEIGHTS_KITTY = b"bin/tiny-yolov3-kitty.weights"
+DATA_KITTY = b"cfg/kitty.data"
 
 # LISA
-NET = b"cfg/tiny-yolov3-lisa.cfg"
-WEIGHTS = b"bin/tiny-yolov3-lisa.weights"
-DATA = b"cfg/lisa.data"
+NET_LISA = b"cfg/tiny-yolov3-lisa.cfg"
+WEIGHTS_LISA = b"bin/tiny-yolov3-lisa.weights"
+DATA_LISA = b"cfg/lisa.data"
 
 # YOLOv3
 # NET = b"cfg/yolov3.cfg"
@@ -50,9 +50,9 @@ def main_opencv(net, meta):
 
     print(detections)
 
-def opencv_test(net, meta, img, wait=0):
+def opencv_test(net, meta, img, threshold, wait=0):
     im = nparray_to_image(img)
-    r = detect_im(net, meta, im)
+    r = detect_im(net, meta, im, thresh=threshold)
     detections = convert_format(r)
 
     for res in detections:
@@ -86,8 +86,13 @@ def main():
         opencv_test(net, meta, img)
 
 def main_camera():
-    net = load_net(DARKNET_PATH + NET, DARKNET_PATH + WEIGHTS, 0)
-    meta = load_meta(DARKNET_PATH + DATA)
+    THRESHOLD = 0.1
+
+    net_lisa = load_net(DARKNET_PATH + NET_LISA, DARKNET_PATH + WEIGHTS_LISA, 0)
+    meta_lisa = load_meta(DARKNET_PATH + DATA_LISA)
+
+    net_kitty = load_net(DARKNET_PATH + NET_KITTY, DARKNET_PATH + WEIGHTS_KITTY, 0)
+    meta_kitty = load_meta(DARKNET_PATH + DATA_KITTY)
 
     vc = cv2.VideoCapture(1)
     print(vc.set(cv2.CAP_PROP_FRAME_WIDTH, cp.FRAME_WIDTH))
@@ -98,7 +103,8 @@ def main_camera():
         _, frame = vc.read()
 
         # put frame into input queue of interested thread
-        opencv_test(net, meta, frame, wait=1)
+        # opencv_test(net_kitty, meta_kitty, frame, threshold=THRESHOLD, wait=1)
+        opencv_test(net_lisa, meta_lisa, frame, threshold=THRESHOLD, wait=1)
 
 
 if __name__ == "__main__":

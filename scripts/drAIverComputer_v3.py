@@ -16,6 +16,7 @@ from draiver.detectors.objectdetector import SignDetector
 from draiver.detectors.objectdetector import CarDetector
 import draiver.camera.properties as cp
 import sys, getopt
+import draiver.util.drawing as dr
 
 OUTPUT_PORT = 10001
 INPUT_PORT = 10000
@@ -23,8 +24,6 @@ INPUT_PORT = 10000
 FRAME_WIDTH = 640
 FRAME_HEIGHT = 480
 FPS = 30
-
-SPEED = 50
 
 LINE_DETECTOR_NEGATE = True
 
@@ -133,7 +132,7 @@ def fake_motion_task():
 
     while True:
         left_speed, right_speed = driving_state.compute_motion_informations()
-        print("Speed: "+str(left_speed)+str(right_speed))
+
 
 
 def motion_task():
@@ -192,15 +191,7 @@ def rendering_task():
         # == car
         car_results = driving_state.get_car_detections()
         for res in car_results:
-            pt1 = (res['topleft']['x'], res['topleft']['y'])
-            pt2 = (res['bottomright']['x'], res['bottomright']['y'])
-            color = (0, 0, 0)
-            if res['label'] == 'car':
-                color = (0, 255, 0)
-            elif res['label'] == 'person':
-                color = (255, 0, 0)
-            elif res['label'] == 'Cyclist':
-                color = (0, 0, 255)
+            dr.draw_detection(frame, res)
 
             detection_origin = np.array([
                 [res['bottomright']['x']],
@@ -212,15 +203,12 @@ def rendering_task():
             print("Detection origin bird:" + str(detection_origin_bird))
             #
             cv2.circle(bird, (detection_origin_bird[0], detection_origin_bird[1]), 2, (123, 0, 255), thickness=4)
-            #
-            cv2.rectangle(frame, pt1, pt2, color, thickness=3, lineType=cv2.LINE_8)
 
-        # # == sign
-        # sign_results = driving_state.get_sign_detections()
-        # for res in sign_results:
-        #     pt1 = (res['topleft']['x'], res['topleft']['y'])
-        #     pt2 = (res['bottomright']['x'], res['bottomright']['y'])
-        #     cv2.rectangle(frame, pt1, pt2, (0, 0, 255), thickness=3, lineType=cv2.LINE_8)
+
+        # == sign
+        sign_results = driving_state.get_sign_detections()
+        for res in sign_results:
+            dr.draw_detection(frame, res)
 
         # ================= COLLISION LINE PLOT
 

@@ -35,8 +35,8 @@ LISA_DATA = b"cfg/lisa.data"
 
 class ObjectDetector:
 
-    def __init__(self, net, weights, data):
-        self.threshold = 0.1
+    def __init__(self, net, weights, data, threshold):
+        self.threshold = threshold
         self.net = load_net(DARKNET_PATH + net, DARKNET_PATH + weights, 0)
         self.meta = load_meta(DARKNET_PATH + data)
 
@@ -65,10 +65,10 @@ class ObjectDetector:
 
 class SignDetector(ObjectDetector):
 
-    def __init__(self, net=LISA_NET, weights=LISA_WEIGHTS, data=LISA_DATA):
-        super().__init__(net, weights, data)
+    def __init__(self, net=LISA_NET, weights=LISA_WEIGHTS, data=LISA_DATA, threshold=0.1):
+        super().__init__(net, weights, data, threshold=threshold)
 
 
 class CarDetector(ObjectDetector):
-    def __init__(self, net=KITTY_NET, weights=KITTY_WEIGHTS, data=KITTY_DATA):
-        super().__init__(net, weights, data)
+    def __init__(self, net=KITTY_NET, weights=KITTY_WEIGHTS, data=KITTY_DATA, threshold=0.45):
+        super().__init__(net, weights, data, threshold=threshold)

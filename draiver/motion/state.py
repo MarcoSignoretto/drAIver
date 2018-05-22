@@ -3,17 +3,24 @@ from threading import Lock
 import draiver.camera.properties as cp
 import numpy as np
 import draiver.motion.steering as st
+import draiver.util.detectorutil as du
 
 DEFAULT_OBJECT_COLLISION_DISTANCE = 300
-DEFAULT_FRAME_WITHOUT_DETECTION = 10
+DEFAULT_FRAME_WITHOUT_DETECTION = 5
 
 ACTION_COLLISION_AVOIDANCE = 'collision_avoidance'
+ACTION_STOP = 'stop'
+ACTION_PEDESTRIAN_CROSSING = 'pedestrianCrossing'
 
+BASE_SPEED = 20
 
 # Standard way priority based on distance
 PRIORITY_HIGH = 1
 PRIORITY_MEDIUM = 10
 PRIORITY_LOW = 100
+
+STOP_DURATION_FRAMES = 10
+PEDESTRIAN_CROSSING_DURATION_FRAMES = 10
 
 
 class DrivingState:
@@ -26,9 +33,9 @@ class DrivingState:
         self.perspective_transform = np.load(perspective_file_path)
         self.lock = Lock()
         self.last_car_detections = [] # TODO solid detection like car, pedestrians and so on
-        self.last_sign_detections = [] # TODO solid detection like car, pedestrians and so on
+        self.last_sign_detections = [] # TODO traffic sign detection
 
-        self.last_base_speed = 0
+        self.last_base_speed = BASE_SPEED
 
         self.last_left_line = None
         self.last_right_line = None
@@ -37,7 +44,9 @@ class DrivingState:
         self.last_steering_car_position = None
         self.last_steering_mid = None
         self.avoid_collision = False
-        self.frame_without_detection = 0
+        self.frame_without_collision_detection = 0
+
+        self.actions = {}  # put key of the action and duration
 
     def get_object_collision_distance(self):
         return self.object_collision_distance
@@ -91,18 +100,25 @@ class DrivingState:
 
                 self.avoid_collision = distance < self.object_collision_distance
 
-            elif self.frame_without_detection > DEFAULT_FRAME_WITHOUT_DETECTION:
-                self.frame_without_detection = 0
+
+            elif self.frame_without_collision_detection > DEFAULT_FRAME_WITHOUT_DETECTION:
+                self.frame_without_collision_detection = 0
                 self.avoid_collision = False
 
     def get_car_detections(self):
-        # TODO for each detection associate an action ( stop if detection under certain distance, hadle previus detection )
         with self.lock:
             return self.last_car_detections
 
     def set_sign_detections(self, detections):
         with self.lock:
-            pass
+            self.last_sign_detections = detections  # only for rendering
+            for det in detections:
+                det_label = du.find_class_detection(det)
+                if det_label == ACTION_STOP and ACTION_STOP not in self.actions.keys():  # TODO test better distance from sign
+                    self.actions[ACTION_STOP] = STOP_DURATION_FRAMES
+                elif det_label == ACTION_PEDESTRIAN_CROSSING:  # while sees sign and for a period slow down
+                    self.actions[ACTION_PEDESTRIAN_CROSSING] = PEDESTRIAN_CROSSING_DURATION_FRAMES
+                # TODO yield not work
 
     def get_sign_detections(self):
         with self.lock:
@@ -125,15 +141,38 @@ class DrivingState:
     def get_perspective_transform(self):
         return self.perspective_transform
 
+    def decrease_action(self, action_key):
+        if action_key is not None:
+            if self.actions[action_key] <= 0:
+                self.actions.pop(action_key)
+            else:
+                self.actions[action_key] = self.actions[action_key] - 1
+
     def compute_motion_informations(self):
-        # TODO as result compute the final motor commands
         with self.lock:
             if self.avoid_collision:
-                print("Stop!!! ")
+                print("Stop Car!!! ")
                 return 0, 0
-            else:
-                pass
-                return 12, 12
-                # TODO setup here
+            else:  # check other actions
+                self.frame_without_collision_detection = self.frame_without_collision_detection + 1
+
+                if ACTION_STOP in self.actions.keys():
+                    self.decrease_action(ACTION_STOP)
+                    print("Stop Sign!!! ")
+                    return 0, 0
+                elif ACTION_PEDESTRIAN_CROSSING in self.actions.keys():
+                    print("Pedestrian crossing!!! ")
+                    self.decrease_action(ACTION_PEDESTRIAN_CROSSING)
+                    self.last_base_speed = self.last_base_speed / 2.0
+
+                left_speed, right_speed = st.calculate_motor_speed_for_steering(
+                    self.last_steering_delta,
+                    self.last_steering_car_position,
+                    self.last_steering_mid,
+                    self.last_base_speed
+                )
+                print("Speed: %s %s" % (str(round(left_speed)), str(round(right_speed))))
+                return left_speed, right_speed
+
 
 
