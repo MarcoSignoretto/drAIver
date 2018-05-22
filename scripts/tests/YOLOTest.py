@@ -1,9 +1,9 @@
 #!/envs/drAIver/bin/python
 from darkflow.net.build import TFNet
 import cv2
+import draiver.env as env
 
-DARKFLOW_BASE = "/Users/marco/Documents/GitProjects/UNIVE/darkflow/" # MAC
-# DARKFLOW_BASE = "" # Ubuntu
+DARKFLOW_BASE = env.DATASETS_HOME
 
 # tiny-yolo-voc has same architecture of YOLOv2 with some differences
 TEST_NET_MODEL = DARKFLOW_BASE+"cfg/tiny-yolo-voc.cfg"
@@ -24,14 +24,14 @@ CAR_NET_PB_META = DARKFLOW_BASE+"built_graph/kitty/tiny-yolov2-kitty.meta"
 # NET_PB_META = DARKFLOW_BASE+"built_graph/tiny-yolo-new.meta"
 
 # BASE_PATH = "/mnt/B01EEC811EEC41C8/" # Ubuntu Config
-BASE_PATH = "/Users/marco/Documents/"
+BASE_PATH = env.DATASETS_HOME
 
 
 def main():
     images = [
-        #"Datasets/drAIver/object_detector/test_images/car.png",
-        #"Datasets/drAIver/object_detector/test_images/car_2.png",
-        "Datasets/drAIver/object_detector/test_images/cars.png",
+        #"object_detector/test_images/car.png",
+        #"object_detector/test_images/car_2.png",
+        "object_detector/test_images/cars.png",
     ]
 
     options = {"model": TEST_NET_MODEL, "load": TEST_NET_WEIGHTS, "threshold": 0.2}
@@ -43,7 +43,7 @@ def main():
 
     for path in images:
 
-        # imgcv = cv2.imread(BASE_PATH+"Datasets/drAIver/KITTY/data_object_image_2/training/image_2/000010.png")
+        # imgcv = cv2.imread(BASE_PATH+"KITTY/data_object_image_2/training/image_2/000010.png")
         imgcv = cv2.imread(BASE_PATH+path)
         result = tfnet.return_predict(imgcv)
         for res in result:

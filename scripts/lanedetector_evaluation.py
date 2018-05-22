@@ -6,11 +6,11 @@ import draiver.detectors.line_detector_v3 as ld
 from draiver.camera.birdseye import BirdsEye
 from os import listdir
 from os.path import isfile, join
+import draiver.env as env
 
-# BASE_PATH = "/mnt/B01EEC811EEC41C8/" # Ubuntu Config
-BASE_PATH = "/Users/marco/Documents/" # Mac Config
+BASE_PATH = env.DATASETS_HOME
 
-EVALUATION_PATH = BASE_PATH+"Datasets/drAIver/KITTY/lane_evaluation/"
+EVALUATION_PATH = BASE_PATH+"KITTY/lane_evaluation/"
 IMAGES = EVALUATION_PATH+"images/"
 GROUND_TRUTH = EVALUATION_PATH+"gt/"
 

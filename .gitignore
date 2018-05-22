@@ -7,4 +7,5 @@ StereoVision/
 *__pycache__/
 .vscode/
 config/
+env.py
 

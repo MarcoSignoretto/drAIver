@@ -7,11 +7,9 @@ from os import listdir
 from os.path import isfile, join
 from lxml import etree
 import draiver.util.detectorutil as du
+import draiver.env as env
 
-# BASE_PATH = "/Users/marco/Documents/GitProjects/UNIVE/darkflow/training/" # Mac Config
-BASE_PATH = "/mnt/B01EEC811EEC41C8/Datasets/drAIver/" # Ubuntu Config
-
-DATASETS_PATH = BASE_PATH
+DATASETS_PATH = env.DATASETS_HOME
 
 # TODO fix kitty test images ( not available )
 

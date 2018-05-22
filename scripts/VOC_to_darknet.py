@@ -7,11 +7,9 @@ import pickle
 import os
 from os import listdir, getcwd
 from os.path import join
+import draiver.env as env
 
-# UNIVE PC
-#BASE_PATH = "/home/marco/Desktop/drAIver/Datasets/"
-# MAC
-BASE_PATH = "/Users/marco/Documents/GitProjects/UNIVE/darkflow/training/"
+BASE_PATH = env.DATASETS_HOME
 
 DATASET = "lisa_train_test"
 # DATASET = "lisa"

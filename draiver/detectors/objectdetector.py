@@ -1,5 +1,6 @@
 #!/envs/drAIver/bin/python
 from darknet import *
+import draiver.env as env
 
 # Deprecated
 # DARKFLOW_BASE = "/Users/marco/Documents/GitProjects/UNIVE/darkflow/" # MAC
@@ -19,7 +20,7 @@ from darknet import *
 # MAC
 # DARKNET_PATH = b"/Users/marco/Documents/GitProjects/UNIVE/darknet/"
 # UBUNTU
-DARKNET_PATH = b"/mnt/B01EEC811EEC41C8/GITProjects/UNIVE/darknet/"
+DARKNET_PATH = env.DARKNET_HOME
 
 # KITTY
 KITTY_NET = b"cfg/tiny-yolov3-kitty.cfg"
@@ -35,7 +36,7 @@ LISA_DATA = b"cfg/lisa.data"
 class ObjectDetector:
 
     def __init__(self, net, weights, data):
-        self.threshold = 0.5
+        self.threshold = 0.1
         self.net = load_net(DARKNET_PATH + net, DARKNET_PATH + weights, 0)
         self.meta = load_meta(DARKNET_PATH + data)
 

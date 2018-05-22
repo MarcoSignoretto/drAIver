@@ -3,11 +3,9 @@ from os import listdir
 from os.path import isfile, join
 from random import randint
 import os
+import draiver.env as env
 
-# UNIVE PC
-#BASE_PATH = "/home/marco/Desktop/drAIver/Datasets/"
-# MAC
-BASE_PATH = "/Users/marco/Documents/GitProjects/UNIVE/darkflow/training/"
+BASE_PATH = env.DATASETS_HOME
 
 DATASET = "lisa_train_test"
 

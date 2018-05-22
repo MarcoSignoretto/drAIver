@@ -1,12 +1,13 @@
 #!/envs/drAIver/bin/python
 import csv
 import xml.etree.cElementTree as ET
+import draiver.env as env
 
-LISA_CSV = "Datasets/drAIver/LISA/annotations/vid_annotations.csv"
+LISA_CSV = env.DATASETS_HOME+"LISA/annotations/vid_annotations.csv"
 # BASE_PATH = "/mnt/B01EEC811EEC41C8/" # Ubuntu Config
-BASE_PATH = "/Users/marco/Documents/"
+BASE_PATH = env.DATASETS_HOME
 
-ANNOTATIONS_OUTPUT_DIR = "/Users/marco/Documents/GitProjects/UNIVE/darkflow/training/lisa/annotations/"
+ANNOTATIONS_OUTPUT_DIR = BASE_PATH+"lisa/annotations/"
 
 
 def new_object(root, row):

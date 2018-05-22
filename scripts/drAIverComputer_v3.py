@@ -90,7 +90,7 @@ def collect_image_local_camera():
 
 
 def sign_detection_task():
-    sign_detector = SignDetector(threshold=0.2)
+    sign_detector = SignDetector()
     while True:
         frame = global_sign_detection_queue.get()
         detection_result = sign_detector.detect(frame)
@@ -98,10 +98,11 @@ def sign_detection_task():
 
 
 def car_detection_task():
-    car_detection = CarDetector(threshold=0.2)
+    car_detection = CarDetector()
     while True:
         frame = global_car_detection_queue.get()
         detection_result = car_detection.detect(frame)
+        print(detection_result)
         driving_state.set_car_detections(detection_result)
 
 
