@@ -65,7 +65,7 @@ def collect_image_data():
         global_car_detection_queue.put(decimg_left)
         global_sign_detection_queue.put(decimg_left)
         global_rendering_queue.put(decimg_left)
-        print("Image arrived!!")
+
 
     sock.close()
 

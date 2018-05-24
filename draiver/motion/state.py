@@ -8,9 +8,12 @@ import draiver.util.detectorutil as du
 DEFAULT_OBJECT_COLLISION_DISTANCE = 300
 DEFAULT_FRAME_WITHOUT_DETECTION = 5
 
+COLLISION_AVOIDANCE_ACTION_SET = ['car']#'collision_avoidance'
+
 ACTION_COLLISION_AVOIDANCE = 'collision_avoidance'
 ACTION_STOP = 'stop'
 ACTION_PEDESTRIAN_CROSSING = 'pedestrianCrossing'
+ACTION_AVOID_STOP = 'avoid_stop'
 
 BASE_SPEED = 20
 
@@ -19,8 +22,10 @@ PRIORITY_HIGH = 1
 PRIORITY_MEDIUM = 10
 PRIORITY_LOW = 100
 
-STOP_DURATION_FRAMES = 10
-PEDESTRIAN_CROSSING_DURATION_FRAMES = 10
+COLLISION_AVOIDANCE_DURATION_FRAMES = 50
+STOP_DURATION_FRAMES = 20
+AVOID_STOP_DURATION_FRAMES = 100
+PEDESTRIAN_CROSSING_DURATION_FRAMES = 100
 
 
 class DrivingState:
@@ -56,54 +61,61 @@ class DrivingState:
             # TODO control on detections
             return self.last_base_speed
 
+    # def set_car_detections(self, detections):
+    #     # TODO for each detection associate an action ( stop if detection under certain distance
+    #     with self.lock:
+    #         self.last_car_detections = detections
+    #         detection_origins = np.zeros((3, len(self.last_car_detections)), dtype=np.float32)
+    #         detection_ends = np.zeros((3, len(self.last_car_detections)), dtype=np.float32)
+    #         for i in range(0, len(self.last_car_detections)):
+    #             det = self.last_car_detections[i]
+    #             detection_origins[:, i] = [
+    #                 det['bottomright']['x'],
+    #                 det['bottomright']['y'],
+    #                 1
+    #             ]
+    #             # TODO understand if this is good
+    #             # detection_ends[:, i] = [
+    #             #     det['topleft']['x'],
+    #             #     det['bottomright']['y'],
+    #             #     1
+    #             # ]
+    #
+    #         if len(self.last_car_detections) > 0:
+    #             detection_origins_bird = np.matmul(self.perspective_transform, detection_origins)
+    #             detection_origins_bird = detection_origins_bird / detection_origins_bird[2]
+    #
+    #             # TODO understand if this is good
+    #             # detection_ends_bird = np.matmul(self.perspective_transform, detection_ends)
+    #             # detection_ends_bird = detection_ends_bird / detection_ends_bird[2]
+    #
+    #             max_index = np.argmax(detection_origins_bird[1])  # closest object
+    #
+    #             distance = self.bird_height - detection_origins_bird[1, max_index]
+    #
+    #             # TODO understand if this is good
+    #             # if self.last_left_line is not None and self.last_right_line is not None:
+    #             #     int_left = st.find_intersection_point(self.last_left_line, detection_origins_bird[1, max_index])
+    #             #     int_right = st.find_intersection_point(self.last_right_line, detection_origins_bird[1, max_index])
+    #             #
+    #             #     if detection_origins_bird[0, max_index] in range(int_left, int_right) and detection_ends_bird[0, max_index] in range(int_left,int_right):
+    #             #         self.avoid_collision = distance < self.object_collision_distance
+    #             # else: # No line detected so any object is in valid range
+    #             #     self.avoid_collision = distance < self.object_collision_distance
+    #
+    #             self.avoid_collision = distance < self.object_collision_distance
+    #
+    #
+    #         elif self.frame_without_collision_detection > DEFAULT_FRAME_WITHOUT_DETECTION:
+    #             self.frame_without_collision_detection = 0
+    #             self.avoid_collision = False
+
     def set_car_detections(self, detections):
-        # TODO for each detection associate an action ( stop if detection under certain distance
-        with self.lock:
-            self.last_car_detections = detections
-            detection_origins = np.zeros((3, len(self.last_car_detections)), dtype=np.float32)
-            detection_ends = np.zeros((3, len(self.last_car_detections)), dtype=np.float32)
-            for i in range(0, len(self.last_car_detections)):
-                det = self.last_car_detections[i]
-                detection_origins[:, i] = [
-                    det['bottomright']['x'],
-                    det['bottomright']['y'],
-                    1
-                ]
-                # TODO understand if this is good
-                # detection_ends[:, i] = [
-                #     det['topleft']['x'],
-                #     det['bottomright']['y'],
-                #     1
-                # ]
-
-            if len(self.last_car_detections) > 0:
-                detection_origins_bird = np.matmul(self.perspective_transform, detection_origins)
-                detection_origins_bird = detection_origins_bird / detection_origins_bird[2]
-
-                # TODO understand if this is good
-                # detection_ends_bird = np.matmul(self.perspective_transform, detection_ends)
-                # detection_ends_bird = detection_ends_bird / detection_ends_bird[2]
-
-                max_index = np.argmax(detection_origins_bird[1])  # closest object
-
-                distance = self.bird_height - detection_origins_bird[1, max_index]
-
-                # TODO understand if this is good
-                # if self.last_left_line is not None and self.last_right_line is not None:
-                #     int_left = st.find_intersection_point(self.last_left_line, detection_origins_bird[1, max_index])
-                #     int_right = st.find_intersection_point(self.last_right_line, detection_origins_bird[1, max_index])
-                #
-                #     if detection_origins_bird[0, max_index] in range(int_left, int_right) and detection_ends_bird[0, max_index] in range(int_left,int_right):
-                #         self.avoid_collision = distance < self.object_collision_distance
-                # else: # No line detected so any object is in valid range
-                #     self.avoid_collision = distance < self.object_collision_distance
-
-                self.avoid_collision = distance < self.object_collision_distance
-
-
-            elif self.frame_without_collision_detection > DEFAULT_FRAME_WITHOUT_DETECTION:
-                self.frame_without_collision_detection = 0
-                self.avoid_collision = False
+        self.last_car_detections = detections
+        for det in detections:
+            det_label = du.find_class_detection(det)
+            if det_label in COLLISION_AVOIDANCE_ACTION_SET:  # TODO test better distance from sign
+                self.actions[ACTION_COLLISION_AVOIDANCE] = COLLISION_AVOIDANCE_DURATION_FRAMES
 
     def get_car_detections(self):
         with self.lock:
@@ -114,7 +126,7 @@ class DrivingState:
             self.last_sign_detections = detections  # only for rendering
             for det in detections:
                 det_label = du.find_class_detection(det)
-                if det_label == ACTION_STOP and ACTION_STOP not in self.actions.keys():  # TODO test better distance from sign
+                if det_label == ACTION_STOP and ACTION_STOP not in self.actions.keys() and ACTION_AVOID_STOP not in self.actions.keys():  # TODO test better distance from sign
                     self.actions[ACTION_STOP] = STOP_DURATION_FRAMES
                 elif det_label == ACTION_PEDESTRIAN_CROSSING:  # while sees sign and for a period slow down
                     self.actions[ACTION_PEDESTRIAN_CROSSING] = PEDESTRIAN_CROSSING_DURATION_FRAMES
@@ -148,31 +160,60 @@ class DrivingState:
             else:
                 self.actions[action_key] = self.actions[action_key] - 1
 
+    # def compute_motion_informations(self):
+    #     with self.lock:
+    #         if self.avoid_collision:
+    #             print("Stop Car!!! ")
+    #             return 0, 0
+    #         else:  # check other actions
+    #             self.frame_without_collision_detection = self.frame_without_collision_detection + 1
+    #
+    #             if ACTION_STOP in self.actions.keys():
+    #                 self.decrease_action(ACTION_STOP)
+    #                 print("Stop Sign!!! ")
+    #                 return 0, 0
+    #             elif ACTION_PEDESTRIAN_CROSSING in self.actions.keys():
+    #                 print("Pedestrian crossing!!! ")
+    #                 self.decrease_action(ACTION_PEDESTRIAN_CROSSING)
+    #                 self.last_base_speed = self.last_base_speed / 2.0
+    #
+    #             left_speed, right_speed = st.calculate_motor_speed_for_steering(
+    #                 self.last_steering_delta,
+    #                 self.last_steering_car_position,
+    #                 self.last_steering_mid,
+    #                 self.last_base_speed
+    #             )
+    #             print("Speed: %s %s" % (str(round(left_speed)), str(round(right_speed))))
+    #             return left_speed, right_speed
+
     def compute_motion_informations(self):
         with self.lock:
-            if self.avoid_collision:
-                print("Stop Car!!! ")
+            if ACTION_COLLISION_AVOIDANCE in self.actions.keys():
+                self.decrease_action(ACTION_COLLISION_AVOIDANCE)
+                print("Collision avoidance!! ")
                 return 0, 0
-            else:  # check other actions
-                self.frame_without_collision_detection = self.frame_without_collision_detection + 1
+            if ACTION_AVOID_STOP in self.actions.keys():
+                self.decrease_action(ACTION_AVOID_STOP)
 
-                if ACTION_STOP in self.actions.keys():
-                    self.decrease_action(ACTION_STOP)
-                    print("Stop Sign!!! ")
-                    return 0, 0
-                elif ACTION_PEDESTRIAN_CROSSING in self.actions.keys():
-                    print("Pedestrian crossing!!! ")
-                    self.decrease_action(ACTION_PEDESTRIAN_CROSSING)
-                    self.last_base_speed = self.last_base_speed / 2.0
+            if ACTION_STOP in self.actions.keys():
+                if self.actions[ACTION_STOP] <= 0:
+                    self.actions[ACTION_AVOID_STOP] = AVOID_STOP_DURATION_FRAMES
+                self.decrease_action(ACTION_STOP)
+                print("Stop Sign!!! ")
+                return 0, 0
+            elif ACTION_PEDESTRIAN_CROSSING in self.actions.keys():
+                print("Pedestrian crossing!!! ")
+                self.decrease_action(ACTION_PEDESTRIAN_CROSSING)
+                self.last_base_speed = self.last_base_speed / 2.0
 
-                left_speed, right_speed = st.calculate_motor_speed_for_steering(
-                    self.last_steering_delta,
-                    self.last_steering_car_position,
-                    self.last_steering_mid,
-                    self.last_base_speed
-                )
-                print("Speed: %s %s" % (str(round(left_speed)), str(round(right_speed))))
-                return left_speed, right_speed
+            left_speed, right_speed = st.calculate_motor_speed_for_steering(
+                self.last_steering_delta,
+                self.last_steering_car_position,
+                self.last_steering_mid,
+                self.last_base_speed
+            )
+            print("Speed: %s %s" % (str(round(left_speed)), str(round(right_speed))))
+            return left_speed, right_speed
 
 
 

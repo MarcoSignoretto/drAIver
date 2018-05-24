@@ -7,9 +7,10 @@ from os.path import isfile, join
 import draiver.env as env
 import draiver.camera.properties as cp
 
-# Tiny YOLOv3
-# NET = b"cfg/yolov3-tiny.cfg"
-# WEIGHTS = b"bin/yolov3-tiny.weights"
+# COCO
+# NET_KITTY = b"cfg/tiny-yolov3-coco.cfg"
+# WEIGHTS_KITTY = b"bin/tiny-yolov3-coco.weights"
+# DATA_KITTY = b"cfg/coco.data"
 
 # KITTY
 NET_KITTY = b"cfg/tiny-yolov3-kitty.cfg"
@@ -27,7 +28,7 @@ DATA_LISA = b"cfg/lisa.data"
 
 DATASETS_PATH = env.DATASETS_HOME
 
-IMAGES = DATASETS_PATH+"KITTY/data_object_image_2/testing/image_2/"
+IMAGES = DATASETS_PATH+"kitty_train_test/images_train/"
 
 DARKNET_PATH = env.DARKNET_HOME
 DARKNET_PATH_NO_BIN = env.DARKNET_HOME_NO_BIN
@@ -74,16 +75,18 @@ def convert_format(r):
 
 
 def main():
+    THRESHOLD = 0.1
+
     images = [f for f in listdir(IMAGES) if isfile(join(IMAGES, f))]
     images = [f for f in images if ".png" in f]
     images = [f for f in images if '._' not in f]  # Avoid mac issues
 
-    net = load_net(DARKNET_PATH + NET, DARKNET_PATH + WEIGHTS, 0)
-    meta = load_meta(DARKNET_PATH + DATA)
+    net = load_net(DARKNET_PATH + NET_KITTY, DARKNET_PATH + WEIGHTS_KITTY, 0)
+    meta = load_meta(DARKNET_PATH + DATA_KITTY)
 
     for filename in images:
         img = cv2.imread(IMAGES + filename)
-        opencv_test(net, meta, img)
+        opencv_test(net, meta, img, threshold=THRESHOLD)
 
 def main_camera():
     THRESHOLD = 0.1
@@ -103,8 +106,8 @@ def main_camera():
         _, frame = vc.read()
 
         # put frame into input queue of interested thread
-        # opencv_test(net_kitty, meta_kitty, frame, threshold=THRESHOLD, wait=1)
-        opencv_test(net_lisa, meta_lisa, frame, threshold=THRESHOLD, wait=1)
+        opencv_test(net_kitty, meta_kitty, frame, threshold=THRESHOLD, wait=1)
+        #opencv_test(net_lisa, meta_lisa, frame, threshold=THRESHOLD, wait=1)
 
 
 if __name__ == "__main__":
