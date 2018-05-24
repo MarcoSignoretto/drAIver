@@ -203,8 +203,12 @@ class DrivingState:
                 return 0, 0
             elif ACTION_PEDESTRIAN_CROSSING in self.actions.keys():
                 print("Pedestrian crossing!!! ")
+                if self.actions[ACTION_PEDESTRIAN_CROSSING] <= 0:
+                    self.last_base_speed = BASE_SPEED
+                else:
+                    self.last_base_speed = BASE_SPEED / 2.0
                 self.decrease_action(ACTION_PEDESTRIAN_CROSSING)
-                self.last_base_speed = self.last_base_speed / 2.0
+
 
             left_speed, right_speed = st.calculate_motor_speed_for_steering(
                 self.last_steering_delta,
