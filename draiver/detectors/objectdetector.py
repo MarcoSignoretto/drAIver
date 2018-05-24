@@ -70,5 +70,5 @@ class SignDetector(ObjectDetector):
 
 
 class CarDetector(ObjectDetector):
-    def __init__(self, net=KITTY_NET, weights=KITTY_WEIGHTS, data=KITTY_DATA, threshold=0.45):
+    def __init__(self, net=KITTY_NET, weights=KITTY_WEIGHTS, data=KITTY_DATA, threshold=0.1):
         super().__init__(net, weights, data, threshold=threshold)
