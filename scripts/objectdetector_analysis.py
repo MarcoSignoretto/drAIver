@@ -22,7 +22,6 @@ LISA_TEST_IMAGES = LISA_PATH + "images_test/" # TODO complete
 KITTY_GROUND_TRUTH = KITTY_PATH + "annotations_train/" # TODO complete
 LISA_GROUND_TRUTH = LISA_PATH + "annotations_train/" # TODO complete
 
-
 def compute_fps(report):
     mean_eval_time_list = []
     for key, measures in report.items():
@@ -133,22 +132,40 @@ def compute_mAP(report, consider_classes):
 
     return np.mean(mAP_list)
 
-
-def precision_recall_curve_plot(report):
+def precision_recall_fscore_curve_based_on_threshold(report):
     for key, measures in report.items():
+
         precision, recall, f1_score, mean_eval_time = map(list, zip(*measures))
 
         plt.title(key)
+        plt.ylabel('value')
+        plt.xlabel('threshold')
+        plt.plot(np.arange(0.01, 1.0, step=0.01, dtype=np.float32), precision, label='precision')
+        plt.plot(np.arange(0.01, 1.0, step=0.01, dtype=np.float32), recall, label='recall')
+        plt.plot(np.arange(0.01, 1.0, step=0.01, dtype=np.float32), f1_score, label='f1 score')
+        plt.legend()
+        plt.show()
+
+
+def precision_recall_curve_plot(report):
+    for key, measures in report.items():
+
+        precision, recall, f1_score, mean_eval_time = map(list, zip(*measures))
+
+        plt.title(key)
+        plt.ylabel('precision')
+        plt.xlabel('recall')
         plt.scatter(recall, precision)
         plt.show()
 
 
 def main(option):
-    consider_classes = ['car','person', 'Cyclist'] if option == 'kitty' else ['stop','yield', 'pedestrianCrossing'] # TODO check
+    consider_classes = ['car','person', 'Cyclist'] if option == 'kitty' else ['pedestrianCrossing', 'speedLimit35', 'signalAhead', 'stop'] # TODO check
     with open('output/report_%s_001.pickle' % option, 'rb') as handle:
         report = pk.load(handle)
 
         precision_recall_curve_plot(report)
+        precision_recall_fscore_curve_based_on_threshold(report)
         AP = compute_AP(report)
         print("=========================================== SUMMARY ==============================")
         mAP = compute_mAP(report, consider_classes)
