@@ -67,4 +67,4 @@ To the training procedure see the section [training](https://github.com/MarcoSig
 
 [BrickPi3 Documentation](http://www.aplu.ch/classdoc/dexter/brickpi3.BrickPi3-class.html)
 
-[Thesis](https://github.com/MarcoSignoretto/drAIver/blob/master/readme/Signoretto_Marco_drAIver.md)
+[Thesis](https://github.com/MarcoSignoretto/drAIver/blob/master/readme/Signoretto_Marco_drAIver.pdf)
