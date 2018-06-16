@@ -149,14 +149,15 @@ def precision_recall_fscore_curve_based_on_threshold(report):
 
 def precision_recall_curve_plot(report):
     for key, measures in report.items():
+        if key in ['stop', 'pedestrianCrossing', 'signalAhead', 'speedLimit35']:
 
-        precision, recall, f1_score, mean_eval_time = map(list, zip(*measures))
+            precision, recall, f1_score, mean_eval_time = map(list, zip(*measures))
 
-        plt.title(key)
-        plt.ylabel('precision')
-        plt.xlabel('recall')
-        plt.scatter(recall, precision)
-        plt.show()
+            plt.title(key)
+            plt.ylabel('precision')
+            plt.xlabel('recall')
+            plt.scatter(recall, precision)
+            plt.show()
 
 
 def main(option):
